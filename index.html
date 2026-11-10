@@ -1,0 +1,2324 @@
+html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Project Alice — Personal AI Girlfriend</title>
+  
+  <style>
+    /* ==========================================================================
+       RESET & THEME DESIGN SYSTEM (PURE CSS - NO EXTERNAL DEPENDENCIES)
+       ========================================================================== */
+    :root {
+      --bg-dark: #0b0914;
+      --bg-surface: #141024;
+      --bg-card: #1c1630;
+      --bg-glass: rgba(28, 22, 48, 0.85);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(255, 111, 169, 0.35);
+      
+      --accent-pink: #ff6fa9;
+      --accent-pink-hover: #ff5297;
+      --accent-purple: #9d4edd;
+      --accent-violet: #7928ca;
+      --accent-cyan: #38bdf8;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-faint: #64748b;
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+      
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 111, 169, 0.15);
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: hidden;
+      line-height: 1.4;
+    }
+
+    /* Mobile-first app container */
+    #app-container {
+      width: 100%;
+      max-width: 480px;
+      height: 100vh;
+      max-height: 920px;
+      background: var(--bg-surface);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 0 0 2px var(--border-glow);
+    }
+
+    @media (min-width: 500px) {
+      #app-container {
+        height: 94vh;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-subtle);
+      }
+    }
+
+    /* ==========================================================================
+       TOP APP BAR / HEADER
+       ========================================================================== */
+    header {
+      background: var(--bg-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+    }
+
+    .alice-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .avatar-wrapper {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px;
+      box-shadow: 0 0 10px rgba(255, 111, 169, 0.4);
+    }
+
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      background: #251b3a;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: var(--accent-pink);
+      font-size: 18px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background: #10b981;
+      border: 2px solid var(--bg-surface);
+      border-radius: var(--radius-full);
+      position: absolute;
+      bottom: 0;
+      right: 0;
+    }
+
+    .brand-meta h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .relationship-badge {
+      font-size: 10px;
+      padding: 2px 7px;
+      background: rgba(255, 111, 169, 0.15);
+      color: var(--accent-pink);
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      border: 1px solid rgba(255, 111, 169, 0.25);
+    }
+
+    .sub-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 1px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-icon {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-icon:active, .btn-icon:hover {
+      background: rgba(255, 111, 169, 0.2);
+      border-color: var(--accent-pink);
+      color: var(--accent-pink);
+    }
+
+    /* ==========================================================================
+       CANVAS CHARACTER STAGE
+       ========================================================================== */
+    #character-stage {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      background: radial-gradient(circle at center 30%, #261942 0%, #0e0a1b 80%);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+      transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    #character-stage.collapsed {
+      height: 75px;
+    }
+
+    #character-stage.expanded {
+      height: 310px;
+    }
+
+    canvas#aliceCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: pointer;
+    }
+
+    .stage-overlays {
+      position: absolute;
+      top: 8px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .stage-pill {
+      pointer-events: auto;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      background: rgba(14, 10, 27, 0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .stage-pill.clickable {
+      cursor: pointer;
+    }
+
+    .stage-pill.clickable:hover {
+      border-color: var(--accent-pink);
+      color: var(--accent-pink);
+    }
+
+    .speech-indicator {
+      display: none;
+      align-items: center;
+      gap: 3px;
+      position: absolute;
+      bottom: 8px;
+      right: 12px;
+      background: rgba(14, 10, 27, 0.8);
+      padding: 4px 8px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-glow);
+      font-size: 10px;
+      color: var(--accent-pink);
+    }
+
+    .speech-indicator.active {
+      display: flex;
+    }
+
+    .wave-bar {
+      width: 2.5px;
+      height: 10px;
+      background: var(--accent-pink);
+      border-radius: 2px;
+      animation: wave 0.8s ease-in-out infinite alternate;
+    }
+    .wave-bar:nth-child(2) { animation-delay: 0.2s; height: 14px; }
+    .wave-bar:nth-child(3) { animation-delay: 0.4s; height: 8px; }
+
+    @keyframes wave {
+      0% { transform: scaleY(0.4); }
+      100% { transform: scaleY(1.3); }
+    }
+
+    /* ==========================================================================
+       CHAT LOG & MESSAGE CONTAINER
+       ========================================================================== */
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-behavior: smooth;
+    }
+
+    /* Custom scrollbar */
+    #chat-container::-webkit-scrollbar {
+      width: 4px;
+    }
+    #chat-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
+    }
+
+    .message-row {
+      display: flex;
+      flex-direction: column;
+      max-width: 86%;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-row.alice {
+      align-self: flex-start;
+    }
+
+    .message-row.user {
+      align-self: flex-end;
+    }
+
+    .bubble-wrapper {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+    }
+
+    .bubble {
+      padding: 10px 14px;
+      font-size: 13.5px;
+      line-height: 1.45;
+      position: relative;
+      word-break: break-word;
+      user-select: text;
+    }
+
+    .message-row.alice .bubble {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: #ede9fe;
+      border-radius: 16px 16px 16px 3px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .message-row.user .bubble {
+      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+      color: #ffffff;
+      border-radius: 16px 16px 3px 16px;
+      box-shadow: 0 4px 14px rgba(255, 111, 169, 0.25);
+    }
+
+    .message-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      color: var(--text-faint);
+      margin-top: 3px;
+      padding: 0 4px;
+    }
+
+    .message-row.user .message-footer {
+      justify-content: flex-end;
+    }
+
+    .btn-voice-replay {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      transition: color 0.15s;
+    }
+
+    .btn-voice-replay:hover, .btn-voice-replay.playing {
+      color: var(--accent-pink);
+    }
+
+    /* Typing indicator */
+    .typing-box {
+      align-self: flex-start;
+      display: none;
+      padding: 10px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px 16px 16px 3px;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .typing-box.active {
+      display: flex;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent-pink);
+      border-radius: 50%;
+      animation: blink 1.2s infinite both;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1.1); }
+    }
+
+    /* ==========================================================================
+       QUICK CHIPS / BANTER SUGGESTIONS
+       ========================================================================== */
+    .chips-tray {
+      padding: 4px 12px 6px;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      white-space: nowrap;
+      flex-shrink: 0;
+      scrollbar-width: none;
+    }
+
+    .chips-tray::-webkit-scrollbar {
+      display: none;
+    }
+
+    .chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      color: #cbd5e1;
+      font-size: 11px;
+      padding: 5px 11px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chip:active, .chip:hover {
+      background: rgba(255, 111, 169, 0.18);
+      border-color: var(--accent-pink);
+      color: var(--accent-pink);
+    }
+
+    /* ==========================================================================
+       BOTTOM INPUT CONTROL BAR
+       ========================================================================== */
+    footer {
+      background: var(--bg-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border-subtle);
+      padding: 8px 12px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .input-wrapper {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    #chat-input {
+      width: 100%;
+      background: rgba(14, 10, 27, 0.85);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 13.5px;
+      padding: 9px 38px 9px 14px;
+      border-radius: var(--radius-full);
+      outline: none;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+      user-select: text;
+    }
+
+    #chat-input:focus {
+      border-color: var(--accent-pink);
+      box-shadow: 0 0 12px rgba(255, 111, 169, 0.25);
+    }
+
+    .btn-input-mute {
+      position: absolute;
+      right: 8px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .btn-input-mute.active {
+      color: var(--accent-pink);
+    }
+
+    .btn-send {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+      border: none;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 15px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(255, 111, 169, 0.35);
+      transition: transform 0.15s ease;
+    }
+
+    .btn-send:active {
+      transform: scale(0.92);
+    }
+
+    /* ==========================================================================
+       MODAL DIALOGS (MEMORY HUB, HISTORY, SETTINGS)
+       ========================================================================== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-window {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 420px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-lg);
+      animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalPop {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header h2 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-close-modal {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+    }
+
+    .btn-close-modal:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .modal-body {
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      user-select: text;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .form-input, .form-select {
+      background: rgba(11, 9, 20, 0.85);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      border-radius: var(--radius-md);
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      width: 100%;
+      user-select: text;
+    }
+
+    .form-input:focus, .form-select:focus {
+      border-color: var(--accent-pink);
+    }
+
+    .range-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .range-input {
+      flex: 1;
+      accent-color: var(--accent-pink);
+    }
+
+    .pill-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    .pill-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 9px 12px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12.5px;
+    }
+
+    .btn-del {
+      background: transparent;
+      border: none;
+      color: #ef4444;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 2px 6px;
+    }
+
+    .btn-del:hover {
+      color: #f87171;
+    }
+
+    .modal-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn-action {
+      padding: 7px 14px;
+      border-radius: var(--radius-md);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+    }
+
+    /* Toast banner */
+    #toast {
+      position: fixed;
+      bottom: 75px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(28, 22, 48, 0.95);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--accent-pink);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s ease;
+    }
+
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MAIN WRAPPER -->
+  <div id="app-container">
+
+    <!-- HEADER BAR -->
+    <header>
+      <div class="alice-brand" onclick="AliceApp.cycleMood()">
+        <div class="avatar-wrapper">
+          <div class="avatar-img">A</div>
+          <div class="status-dot"></div>
+        </div>
+        <div class="brand-meta">
+          <h1>
+            Alice 
+            <span id="relationship-title" class="relationship-badge">Sweetheart 💕</span>
+          </h1>
+          <div class="sub-meta">
+            <span id="current-mood-indicator">💖 Affectionate</span> • 
+            <span id="affection-bar-text">Affection: 75%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Stage Toggle -->
+        <button class="btn-icon" onclick="AliceApp.toggleStageSize()" title="Toggle Character Size">👁️</button>
+        <!-- Memory Hub -->
+        <button class="btn-icon" onclick="AliceApp.openModal('memory-modal')" title="Memory Hub">🧠</button>
+        <!-- Chat History -->
+        <button class="btn-icon" onclick="AliceApp.openModal('history-modal')" title="History">📜</button>
+        <!-- Settings -->
+        <button class="btn-icon" onclick="AliceApp.openModal('settings-modal')" title="Settings">⚙️</button>
+      </div>
+    </header>
+
+    <!-- CHARACTER STAGE -->
+    <div id="character-stage">
+      <canvas id="aliceCanvas"></canvas>
+
+      <!-- Stage Overlays -->
+      <div class="stage-overlays">
+        <div class="stage-pill clickable" onclick="AliceApp.cycleMood()">
+          <span id="mood-pill-emoji">💖</span>
+          <span id="mood-pill-text">Affectionate</span>
+        </div>
+        <div class="stage-pill">
+          <span>❤️</span>
+          <span id="stage-affection-counter">75 / 100</span>
+        </div>
+      </div>
+
+      <!-- Realtime Audio Wave Visualizer -->
+      <div id="speech-wave" class="speech-indicator">
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <span style="margin-left: 4px;">Speaking</span>
+      </div>
+    </div>
+
+    <!-- CHAT MESSAGES LOG -->
+    <div id="chat-container">
+      <!-- Injected dynamically -->
+      <div id="typing-box" class="typing-box">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <span style="font-size: 11px; color: var(--text-muted); margin-left: 4px;">Alice is thinking...</span>
+      </div>
+    </div>
+
+    <!-- QUICK CONVERSATION CHIPS -->
+    <div class="chips-tray">
+      <button class="chip" onclick="AliceApp.sendQuick('I missed you so much today! ❤️')">Missed you ❤️</button>
+      <button class="chip" onclick="AliceApp.sendQuick('Tell me what you like the most about us? ✨')">About us ✨</button>
+      <button class="chip" onclick="AliceApp.sendQuick('Aaj ka din kaisa raha jaan? 🌸')">Hinglish banter 🌸</button>
+      <button class="chip" onclick="AliceApp.sendQuick('Can you remember my favorite food? 🍕')">Test memory 🧠</button>
+      <button class="chip" onclick="AliceApp.sendQuick('Tease me a little bit 😉')">Tease me 😉</button>
+    </div>
+
+    <!-- BOTTOM INPUT ROW -->
+    <footer>
+      <div class="input-wrapper">
+        <input 
+          type="text" 
+          id="chat-input" 
+          placeholder="Message Alice in Hinglish or English..." 
+          autocomplete="off"
+        />
+        <button 
+          id="btn-voice-toggle" 
+          class="btn-input-mute active" 
+          onclick="AliceApp.toggleVoiceMute()" 
+          title="Toggle Voice"
+        >
+          🔊
+        </button>
+      </div>
+      <button class="btn-send" onclick="AliceApp.handleSend()" title="Send">
+        ➤
+      </button>
+    </footer>
+
+  </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- 1. MEMORY HUB MODAL -->
+  <div id="memory-modal" class="modal-overlay">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h2>🧠 Long-Term Memory Hub</h2>
+        <button class="btn-close-modal" onclick="AliceApp.closeModal('memory-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 12px; color: var(--text-muted);">
+          Memories automatically discovered during conversations are saved in IndexedDB and referenced by Alice during chats.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label">Add Specific Fact For Alice to Remember</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="manual-memory-input" class="form-input" placeholder="e.g. My birthday is November 18..." />
+            <button class="btn-action btn-primary" onclick="AliceApp.addManualMemory()">Save</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Stored Memories Archive</label>
+          <div id="memories-list" class="pill-list">
+            <!-- Dynamic memories list -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-action btn-danger" onclick="AliceApp.clearAllMemories()">Clear All Memories</button>
+        <button class="btn-action btn-secondary" onclick="AliceApp.closeModal('memory-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. CONVERSATION HISTORY MODAL -->
+  <div id="history-modal" class="modal-overlay">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h2>📜 Conversation Database</h2>
+        <button class="btn-close-modal" onclick="AliceApp.closeModal('history-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 12px; color: var(--text-muted);">
+          All turns are archived in client-side IndexedDB and survive page refresh and browser restarts.
+        </p>
+        <div id="history-list" class="pill-list" style="max-height: 320px;">
+          <!-- Dynamic history -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-action btn-danger" onclick="AliceApp.clearChatHistory()">Wipe History</button>
+        <button class="btn-action btn-secondary" onclick="AliceApp.closeModal('history-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. SETTINGS MODAL -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h2>⚙️ Personality & Engine Settings</h2>
+        <button class="btn-close-modal" onclick="AliceApp.closeModal('settings-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- API KEY -->
+        <div class="form-group">
+          <label class="form-label">
+            <span>Gemini API Key</span>
+            <span style="font-size: 10px; color: var(--accent-pink);">Private & Client-Side</span>
+          </label>
+          <input 
+            type="password" 
+            id="cfg-api-key" 
+            class="form-input" 
+            placeholder="AIzaSy... (Leave empty for demo sandbox mode)" 
+          />
+          <span style="font-size: 10.5px; color: var(--text-faint);">
+            Saved securely in localStorage. Never sent to any 3rd party.
+          </span>
+        </div>
+
+        <!-- MODEL SELECTION -->
+        <div class="form-group">
+          <label class="form-label">Gemini Brain Model</label>
+          <select id="cfg-model" class="form-select">
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash (Ultra Fast & Expressive)</option>
+            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Standard)</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Romantic Nuance)</option>
+          </select>
+        </div>
+
+        <!-- VOICE SETTINGS -->
+        <div class="form-group">
+          <label class="form-label">Speech Voice Selection (TTS)</label>
+          <select id="cfg-voice-select" class="form-select">
+            <option value="auto">Auto (Indian English / Hindi Natural Female)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <span>Voice Speed (Rate)</span>
+            <span id="cfg-rate-val">1.0x</span>
+          </label>
+          <div class="range-group">
+            <input type="range" id="cfg-rate" class="range-input" min="0.75" max="1.35" step="0.05" value="1.0" oninput="AliceApp.updateVoiceRate(this.value)" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <span>Voice Pitch (Tone)</span>
+            <span id="cfg-pitch-val">1.15</span>
+          </label>
+          <div class="range-group">
+            <input type="range" id="cfg-pitch" class="range-input" min="0.8" max="1.5" step="0.05" value="1.15" oninput="AliceApp.updateVoicePitch(this.value)" />
+          </div>
+        </div>
+
+        <button class="btn-action btn-secondary" onclick="AliceApp.testVoiceSample()" style="width: 100%;">
+          🔊 Play Voice Sample
+        </button>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-action btn-primary" onclick="AliceApp.saveSettings()">Save Preferences</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast">Notification</div>
+
+  <!-- ================= APPLICATION CODE ENGINE ================= -->
+  <script>
+    /**
+     * 1. INDEXEDDB PERSISTENT STORAGE ('ProjectAliceDB')
+     */
+    class AliceDB {
+      constructor() {
+        this.dbName = 'ProjectAliceDB';
+        this.dbVersion = 1;
+        this.db = null;
+      }
+
+      async open() {
+        return new Promise((resolve, reject) => {
+          if (!window.indexedDB) {
+            console.warn('IndexedDB not supported; fallback to memory');
+            return resolve(false);
+          }
+          const request = indexedDB.open(this.dbName, this.dbVersion);
+          
+          request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('conversations')) {
+              db.createObjectStore('conversations', { keyPath: 'id', autoIncrement: true });
+            }
+            if (!db.objectStoreNames.contains('memories')) {
+              db.createObjectStore('memories', { keyPath: 'id', autoIncrement: true });
+            }
+          };
+
+          request.onsuccess = (e) => {
+            this.db = e.target.result;
+            resolve(true);
+          };
+
+          request.onerror = (e) => {
+            console.error('IndexedDB open error:', e);
+            resolve(false);
+          };
+        });
+      }
+
+      async saveConversation(msg) {
+        if (!this.db) return;
+        return new Promise((resolve) => {
+          const tx = this.db.transaction('conversations', 'readwrite');
+          const store = tx.objectStore('conversations');
+          store.add(msg);
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => resolve(false);
+        });
+      }
+
+      async getAllConversations() {
+        if (!this.db) return [];
+        return new Promise((resolve) => {
+          const tx = this.db.transaction('conversations', 'readonly');
+          const store = tx.objectStore('conversations');
+          const req = store.getAll();
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => resolve([]);
+        });
+      }
+
+      async clearConversations() {
+        if (!this.db) return;
+        return new Promise((resolve) => {
+          const tx = this.db.transaction('conversations', 'readwrite');
+          const store = tx.objectStore('conversations');
+          store.clear();
+          tx.oncomplete = () => resolve(true);
+        });
+      }
+
+      async saveMemory(mem) {
+        if (!this.db) return;
+        return new Promise((resolve) => {
+          const tx = this.db.transaction('memories', 'readwrite');
+          const store = tx.objectStore('memories');
+          const req = store.add(mem);
+          req.onsuccess = (e) => resolve(e.target.result);
+          req.onerror = () => resolve(null);
+        });
+      }
+
+      async getAllMemories() {
+        if (!this.db) return [];
+        return new Promise((resolve) => {
+          const tx = this.db.transaction('memories', 'readonly');
+          const store = tx.objectStore('memories');
+          const req = store.getAll();
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => resolve([]);
+        });
+      }
+
+      async deleteMemory(id) {
+        if (!this.db) return;
+        return new Promise((resolve) => {
+          const tx = this.db.transaction('memories', 'readwrite');
+          const store = tx.objectStore('memories');
+          store.delete(id);
+          tx.oncomplete = () => resolve(true);
+        });
+      }
+
+      async clearMemories() {
+        if (!this.db) return;
+        return new Promise((resolve) => {
+          const tx = this.db.transaction('memories', 'readwrite');
+          const store = tx.objectStore('memories');
+          store.clear();
+          tx.oncomplete = () => resolve(true);
+        });
+      }
+    }
+
+    /**
+     * 2. PROCEDURAL 60FPS CANVAS ANIME CHARACTER ENGINE
+     */
+    class AliceCanvasCharacter {
+      constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.idleTime = 0;
+        this.blinkProgress = 0;
+        this.blinkPhase = 'idle'; // 'idle', 'closing', 'opening'
+        this.mouthFlap = 0;
+        this.mouthTarget = 0;
+        this.isSpeaking = false;
+        this.mood = 'Affectionate';
+
+        this.init();
+      }
+
+      init() {
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.startBlinkScheduler();
+        this.animate();
+      }
+
+      resize() {
+        if (!this.canvas) return;
+        const rect = this.canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = rect.width * dpr;
+        this.canvas.height = rect.height * dpr;
+        this.ctx.scale(dpr, dpr);
+      }
+
+      startBlinkScheduler() {
+        const nextBlinkDelay = Math.random() * 3200 + 2000;
+        setTimeout(() => {
+          this.blinkPhase = 'closing';
+          this.startBlinkScheduler();
+        }, nextBlinkDelay);
+      }
+
+      setMood(mood) {
+        this.mood = mood;
+      }
+
+      setSpeaking(speaking) {
+        this.isSpeaking = speaking;
+        if (!speaking) {
+          this.mouthTarget = 0.05;
+        }
+      }
+
+      animate() {
+        this.idleTime += 0.035;
+        const rect = this.canvas.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+
+        this.ctx.clearRect(0, 0, width, height);
+
+        // Natural blinking physics
+        if (this.blinkPhase === 'closing') {
+          this.blinkProgress += 0.22;
+          if (this.blinkProgress >= 1) {
+            this.blinkProgress = 1;
+            this.blinkPhase = 'opening';
+          }
+        } else if (this.blinkPhase === 'opening') {
+          this.blinkProgress -= 0.22;
+          if (this.blinkProgress <= 0) {
+            this.blinkProgress = 0;
+            this.blinkPhase = 'idle';
+          }
+        }
+
+        // Speaking mouth animation
+        if (this.isSpeaking) {
+          if (Math.random() > 0.45) {
+            this.mouthTarget = Math.random() * 0.9 + 0.1;
+          }
+        } else {
+          this.mouthTarget = 0.04;
+        }
+        this.mouthFlap += (this.mouthTarget - this.mouthFlap) * 0.35;
+
+        // Idle breathing & sway physics
+        const breathe = Math.sin(this.idleTime * 1.6) * 3;
+        const headSway = Math.cos(this.idleTime * 0.9) * 1.8;
+
+        const centerX = width / 2;
+        const centerY = (height / 2) + breathe + 4;
+
+        this.drawAnimeCharacter(centerX, centerY, headSway);
+
+        requestAnimationFrame(() => this.animate());
+      }
+
+      drawAnimeCharacter(cx, cy, sway) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate((sway * Math.PI) / 180);
+
+        // 1. Soft Ambient Backlight Glow
+        const glow = ctx.createRadialGradient(0, -10, 20, 0, -10, 110);
+        glow.addColorStop(0, 'rgba(255, 111, 169, 0.25)');
+        glow.addColorStop(0.6, 'rgba(157, 78, 221, 0.12)');
+        glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(0, -10, 110, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Shoulders & Collar
+        ctx.fillStyle = '#fbe3db';
+        ctx.beginPath();
+        ctx.moveTo(-52, 65);
+        ctx.quadraticCurveTo(0, 75, 52, 65);
+        ctx.lineTo(65, 115);
+        ctx.lineTo(-65, 115);
+        ctx.closePath();
+        ctx.fill();
+
+        // Cyber-romantic top
+        ctx.fillStyle = '#201633';
+        ctx.beginPath();
+        ctx.moveTo(-45, 78);
+        ctx.quadraticCurveTo(0, 86, 45, 78);
+        ctx.lineTo(55, 115);
+        ctx.lineTo(-55, 115);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#ff6fa9';
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+
+        // 3. Hair Back
+        ctx.fillStyle = '#26183a';
+        ctx.beginPath();
+        ctx.moveTo(-56, -20);
+        ctx.quadraticCurveTo(-76, 45, -60, 100);
+        ctx.quadraticCurveTo(-45, 60, -35, 45);
+        ctx.lineTo(35, 45);
+        ctx.quadraticCurveTo(45, 60, 60, 100);
+        ctx.quadraticCurveTo(76, 45, 56, -20);
+        ctx.closePath();
+        ctx.fill();
+
+        // 4. Neck
+        ctx.fillStyle = '#f5d2c4';
+        ctx.fillRect(-12, 34, 24, 36);
+        ctx.fillStyle = 'rgba(215, 145, 135, 0.35)';
+        ctx.beginPath();
+        ctx.ellipse(0, 42, 12, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 5. Anime Face Contour
+        ctx.fillStyle = '#ffece5';
+        ctx.beginPath();
+        ctx.moveTo(-44, -10);
+        ctx.quadraticCurveTo(-44, 26, -24, 48);
+        ctx.quadraticCurveTo(0, 62, 24, 48);
+        ctx.quadraticCurveTo(44, 26, 44, -10);
+        ctx.quadraticCurveTo(42, -56, 0, -56);
+        ctx.quadraticCurveTo(-42, -56, -44, -10);
+        ctx.closePath();
+        ctx.fill();
+
+        // 6. Blush Cheeks (Intensity reacts to mood)
+        let blushAlpha = 0.35;
+        if (this.mood === 'Shy' || this.mood === 'Affectionate') blushAlpha = 0.65;
+        else if (this.mood === 'Annoyed') blushAlpha = 0.15;
+        else if (this.mood === 'Excited' || this.mood === 'Playful') blushAlpha = 0.5;
+
+        ctx.fillStyle = `rgba(255, 95, 135, ${blushAlpha})`;
+        ctx.beginPath();
+        ctx.ellipse(-24, 22, 11, 6, -0.05, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(24, 22, 11, 6, 0.05, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 7. Expressive Anime Eyes & Brows
+        this.drawEyesAndBrows(ctx);
+
+        // 8. Delicate Nose
+        ctx.fillStyle = '#e8a594';
+        ctx.beginPath();
+        ctx.arc(0, 19, 1.4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 9. Mouth (Synced with voice flap)
+        this.drawMouth(ctx);
+
+        // 10. Front Anime Hair Strands & Ribbon
+        this.drawHairFront(ctx);
+
+        ctx.restore();
+      }
+
+      drawEyesAndBrows(ctx) {
+        const eyeSpacing = 24;
+        const eyeY = 6;
+        const eyeW = 14;
+        const eyeH = 15 * (1 - this.blinkProgress);
+
+        // Emotional brow angles
+        let browTilt = 0;
+        let browYOffset = 0;
+        if (this.mood === 'Sad' || this.mood === 'Worried') {
+          browTilt = 3.2;
+          browYOffset = -2;
+        } else if (this.mood === 'Annoyed') {
+          browTilt = -4;
+          browYOffset = 1;
+        } else if (this.mood === 'Playful' || this.mood === 'Excited') {
+          browTilt = 1.4;
+          browYOffset = -4;
+        } else {
+          browTilt = 0.5;
+          browYOffset = -1;
+        }
+
+        // Eyebrows
+        ctx.strokeStyle = '#442045';
+        ctx.lineWidth = 2.4;
+        ctx.lineCap = 'round';
+
+        ctx.beginPath();
+        ctx.moveTo(-eyeSpacing - 12, eyeY - 14 + browYOffset - browTilt);
+        ctx.quadraticCurveTo(-eyeSpacing, eyeY - 18 + browYOffset, -eyeSpacing + 10, eyeY - 12 + browYOffset + browTilt);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(eyeSpacing - 10, eyeY - 12 + browYOffset + browTilt);
+        ctx.quadraticCurveTo(eyeSpacing, eyeY - 18 + browYOffset, eyeSpacing + 12, eyeY - 14 + browYOffset - browTilt);
+        ctx.stroke();
+
+        // If eyes completely closed in blink
+        if (this.blinkProgress > 0.85) {
+          ctx.strokeStyle = '#2d1530';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(-eyeSpacing, eyeY + 4, 10, Math.PI * 1.1, Math.PI * 1.9);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(eyeSpacing, eyeY + 4, 10, Math.PI * 1.1, Math.PI * 1.9);
+          ctx.stroke();
+          return;
+        }
+
+        // Left & Right Eyes
+        [-eyeSpacing, eyeSpacing].forEach((xPos, idx) => {
+          ctx.save();
+          ctx.translate(xPos, eyeY);
+
+          // Sclera
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.ellipse(0, 0, eyeW, Math.max(0.5, eyeH), 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Iris Gradient
+          const irisGrad = ctx.createLinearGradient(0, -eyeH, 0, eyeH);
+          irisGrad.addColorStop(0, '#581c6e');
+          irisGrad.addColorStop(0.5, '#9933cc');
+          irisGrad.addColorStop(1, '#ff66aa');
+
+          ctx.fillStyle = irisGrad;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, eyeW * 0.78, Math.max(0.5, eyeH * 0.95), 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Pupil
+          ctx.fillStyle = '#20082b';
+          ctx.beginPath();
+          ctx.ellipse(0, 1, eyeW * 0.42, Math.max(0.3, eyeH * 0.52), 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Primary Sparkle
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+          ctx.beginPath();
+          ctx.arc(-3.2, -eyeH * 0.35, 3.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Secondary Sparkle
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+          ctx.beginPath();
+          ctx.arc(3.6, eyeH * 0.3, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Eyeliner / Lashes
+          ctx.strokeStyle = '#28102d';
+          ctx.lineWidth = 2.8;
+          ctx.beginPath();
+          ctx.ellipse(0, -eyeH * 0.2, eyeW * 1.05, Math.max(1, eyeH * 0.8), 0, Math.PI * 1.05, Math.PI * 1.95);
+          ctx.stroke();
+
+          // Lash wing
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          if (idx === 0) {
+            ctx.moveTo(-eyeW * 0.9, -eyeH * 0.4);
+            ctx.lineTo(-eyeW * 1.35, -eyeH * 0.7);
+          } else {
+            ctx.moveTo(eyeW * 0.9, -eyeH * 0.4);
+            ctx.lineTo(eyeW * 1.35, -eyeH * 0.7);
+          }
+          ctx.stroke();
+
+          ctx.restore();
+        });
+      }
+
+      drawMouth(ctx) {
+        ctx.save();
+        ctx.translate(0, 36);
+
+        const open = this.mouthFlap;
+
+        if (open > 0.2) {
+          // Open talking mouth
+          ctx.fillStyle = '#b3264c';
+          ctx.beginPath();
+          ctx.ellipse(0, open * 4, 7 + open * 3, 2 + open * 7, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Teeth
+          ctx.fillStyle = '#fffdfc';
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 5, 2, 0, 0, Math.PI);
+          ctx.fill();
+
+          // Tongue
+          ctx.fillStyle = '#ff7599';
+          ctx.beginPath();
+          ctx.ellipse(0, open * 7, 5, 3, 0, 0, Math.PI);
+          ctx.fill();
+
+          ctx.strokeStyle = '#611328';
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        } else {
+          // Closed smiling/mood curve
+          ctx.strokeStyle = '#b83b5e';
+          ctx.lineWidth = 2;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+
+          if (this.mood === 'Sad' || this.mood === 'Worried') {
+            ctx.arc(0, 6, 7, Math.PI * 1.25, Math.PI * 1.75);
+          } else if (this.mood === 'Annoyed') {
+            ctx.moveTo(-5, 3);
+            ctx.lineTo(5, 1);
+          } else if (this.mood === 'Playful') {
+            ctx.arc(-3, 0, 4, 0, Math.PI * 0.85);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(3, 0, 4, Math.PI * 0.15, Math.PI);
+          } else {
+            ctx.arc(0, -3, 8, Math.PI * 0.25, Math.PI * 0.75);
+          }
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      drawHairFront(ctx) {
+        ctx.fillStyle = '#341d47';
+        ctx.beginPath();
+        ctx.moveTo(-45, -20);
+        ctx.quadraticCurveTo(-46, 15, -34, 40);
+        ctx.quadraticCurveTo(-38, 0, -25, -20);
+
+        ctx.quadraticCurveTo(-15, 12, -8, 2);
+        ctx.quadraticCurveTo(0, 16, 8, 2);
+        ctx.quadraticCurveTo(15, 12, 25, -20);
+
+        ctx.quadraticCurveTo(38, 0, 34, 40);
+        ctx.quadraticCurveTo(46, 15, 45, -20);
+
+        ctx.quadraticCurveTo(0, -68, -45, -20);
+        ctx.closePath();
+        ctx.fill();
+
+        // Hair shine highlight
+        ctx.strokeStyle = 'rgba(255, 130, 185, 0.45)';
+        ctx.lineWidth = 3.5;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(0, -30, 36, Math.PI * 1.15, Math.PI * 1.85);
+        ctx.stroke();
+
+        // Cute hair clip
+        ctx.fillStyle = '#ff6299';
+        ctx.beginPath();
+        ctx.arc(28, -26, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(28, -26, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    /**
+     * 3. ANDROID-SAFE SPEECH SYNTHESIS ENGINE
+     */
+    class AliceVoiceEngine {
+      constructor() {
+        this.synth = window.speechSynthesis;
+        this.enabled = localStorage.getItem('alice_voice_enabled') !== 'false';
+        this.rate = parseFloat(localStorage.getItem('alice_voice_rate') || '1.0');
+        this.pitch = parseFloat(localStorage.getItem('alice_voice_pitch') || '1.15');
+        this.selectedVoiceURI = localStorage.getItem('alice_voice_uri') || 'auto';
+        
+        this.activeUtterance = null;
+        this.audioUnlocked = false;
+        this.onStateChange = null;
+
+        this.init();
+      }
+
+      init() {
+        if (!this.synth) return;
+        this.setupAudioUnlockGesture();
+        if (this.synth.onvoiceschanged !== undefined) {
+          this.synth.onvoiceschanged = () => this.populateVoiceSelect();
+        }
+      }
+
+      setupAudioUnlockGesture() {
+        // Mobile browsers require direct gesture to unlock speech synthesis
+        const unlock = () => {
+          if (!this.audioUnlocked && this.synth) {
+            try {
+              const silent = new SpeechSynthesisUtterance(' ');
+              silent.volume = 0.01;
+              silent.rate = 2.0;
+              this.synth.speak(silent);
+              this.audioUnlocked = true;
+            } catch (e) {
+              console.warn(e);
+            }
+          }
+          document.removeEventListener('click', unlock);
+          document.removeEventListener('touchstart', unlock);
+        };
+        document.addEventListener('click', unlock, { once: true });
+        document.addEventListener('touchstart', unlock, { once: true });
+      }
+
+      populateVoiceSelect() {
+        const select = document.getElementById('cfg-voice-select');
+        if (!select || !this.synth) return;
+
+        const voices = this.synth.getVoices();
+        select.innerHTML = '<option value="auto">Auto (Indian English / Hindi Natural Female)</option>';
+
+        voices.forEach((v) => {
+          const opt = document.createElement('option');
+          opt.value = v.voiceURI;
+          opt.textContent = `${v.name} (${v.lang})`;
+          if (this.selectedVoiceURI === v.voiceURI) opt.selected = true;
+          select.appendChild(opt);
+        });
+      }
+
+      getBestFemaleVoice() {
+        if (!this.synth) return null;
+        const voices = this.synth.getVoices();
+        if (!voices || voices.length === 0) return null;
+
+        if (this.selectedVoiceURI && this.selectedVoiceURI !== 'auto') {
+          const userChosen = voices.find(v => v.voiceURI === this.selectedVoiceURI);
+          if (userChosen) return userChosen;
+        }
+
+        // 1. Natural Indian English or Hindi Female
+        const indianFemale = voices.find(v => 
+          (v.lang === 'en-IN' || v.lang === 'hi-IN' || v.lang.startsWith('hi')) && 
+          /female|priya|aditi|kalpana|veena|ananya|heera|neerja/i.test(v.name)
+        );
+        if (indianFemale) return indianFemale;
+
+        // 2. Any Indian Voice
+        const anyIndian = voices.find(v => v.lang === 'en-IN' || v.lang.startsWith('hi'));
+        if (anyIndian) return anyIndian;
+
+        // 3. Natural British / English Female
+        const naturalFemale = voices.find(v => 
+          (v.lang === 'en-GB' || v.lang.startsWith('en')) && 
+          /female|natural|samantha|victoria|serena|stephanie|zira/i.test(v.name)
+        );
+        if (naturalFemale) return naturalFemale;
+
+        return voices.find(v => v.lang.startsWith('en')) || voices[0];
+      }
+
+      speak(text, onComplete) {
+        if (!this.enabled || !this.synth) {
+          if (onComplete) onComplete();
+          return;
+        }
+
+        // Clean emojis & formatting symbols that cause speech glitches on mobile
+        const clean = text
+          .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+          .replace(/[*_#~`]/g, '')
+          .trim();
+
+        if (!clean) {
+          if (onComplete) onComplete();
+          return;
+        }
+
+        // Always stop previous speech to prevent overlapping voices
+        this.stop();
+
+        const utterance = new SpeechSynthesisUtterance(clean);
+        utterance.rate = this.rate;
+        utterance.pitch = this.pitch;
+
+        const voice = this.getBestFemaleVoice();
+        if (voice) {
+          utterance.voice = voice;
+          utterance.lang = voice.lang || 'en-IN';
+        }
+
+        utterance.onstart = () => {
+          if (this.onStateChange) this.onStateChange(true);
+        };
+
+        utterance.onend = () => {
+          this.activeUtterance = null;
+          if (this.onStateChange) this.onStateChange(false);
+          if (onComplete) onComplete();
+        };
+
+        utterance.onerror = () => {
+          this.activeUtterance = null;
+          if (this.onStateChange) this.onStateChange(false);
+          if (onComplete) onComplete();
+        };
+
+        // Retain global reference to protect against Android garbage collection cutting off audio
+        this.activeUtterance = utterance;
+
+        try {
+          this.synth.speak(utterance);
+        } catch (e) {
+          console.warn('SpeechSynthesis error:', e);
+          if (this.onStateChange) this.onStateChange(false);
+        }
+      }
+
+      stop() {
+        if (this.synth) {
+          this.synth.cancel();
+        }
+        this.activeUtterance = null;
+        if (this.onStateChange) this.onStateChange(false);
+      }
+    }
+
+    /**
+     * 4. MAIN PROJECT ALICE CONTROLLER
+     */
+    class AliceApplication {
+      constructor() {
+        this.db = new AliceDB();
+        this.voice = new AliceVoiceEngine();
+        this.character = null;
+
+        this.apiKey = localStorage.getItem('alice_gemini_key') || '';
+        this.model = localStorage.getItem('alice_gemini_model') || 'gemini-2.5-flash';
+        
+        this.affection = parseInt(localStorage.getItem('alice_affection') || '75', 10);
+        this.mood = localStorage.getItem('alice_mood') || 'Affectionate';
+        
+        this.moods = [
+          'Affectionate', 'Playful', 'Happy', 'Excited', 
+          'Shy', 'Worried', 'Sad', 'Annoyed', 'Calm'
+        ];
+
+        this.moodEmojis = {
+          'Affectionate': '💖',
+          'Playful': '😜',
+          'Happy': '✨',
+          'Excited': '🤩',
+          'Shy': '😳',
+          'Worried': '🥺',
+          'Sad': '💔',
+          'Annoyed': '😤',
+          'Calm': '🌸'
+        };
+
+        this.conversations = [];
+        this.memories = [];
+        this.isThinking = false;
+        this.currentPlayingIndex = null;
+      }
+
+      async start() {
+        this.character = new AliceCanvasCharacter('aliceCanvas');
+
+        // Hook Voice with Canvas & UI wave
+        this.voice.onStateChange = (speaking) => {
+          this.character.setSpeaking(speaking);
+          const wave = document.getElementById('speech-wave');
+          if (wave) {
+            if (speaking) wave.classList.add('active');
+            else wave.classList.remove('active');
+          }
+          if (!speaking) {
+            this.currentPlayingIndex = null;
+            this.updateVoicePlayButtons();
+          }
+        };
+
+        // Open Database & Hydrate State
+        await this.db.open();
+        await this.hydrateFromDatabase();
+
+        this.character.setMood(this.mood);
+        this.updateHeaderUI();
+        this.renderChatMessages();
+
+        // Bind Enter Key
+        document.getElementById('chat-input').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') this.handleSend();
+        });
+
+        // Initialize voice dropdown
+        setTimeout(() => this.voice.populateVoiceSelect(), 300);
+      }
+
+      async hydrateFromDatabase() {
+        // Hydrate Conversation History
+        const storedChats = await this.db.getAllConversations();
+        if (storedChats && storedChats.length > 0) {
+          this.conversations = storedChats;
+        } else {
+          // Initial Romantic Hinglish Greeting
+          const greeting = {
+            role: 'alice',
+            text: "Hey jaan! 💕 Finally tum aa gaye! Main kab se tumhara wait kar rahi thi... Aaj ka din kaisa raha tumhara? Kuch interesting hua ya bas meri yaad aa rahi thi? 😉",
+            mood: 'Affectionate',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          };
+          await this.db.saveConversation(greeting);
+          this.conversations = [greeting];
+        }
+
+        // Hydrate Long-Term Memories
+        const storedMems = await this.db.getAllMemories();
+        if (storedMems && storedMems.length > 0) {
+          this.memories = storedMems;
+        } else {
+          // Default foundation memories
+          const seedMems = [
+            { text: "Loves authentic Hinglish banter and late night heartfelt conversations", date: new Date().toLocaleDateString() },
+            { text: "Enjoys playful teasing and sweet romantic messages", date: new Date().toLocaleDateString() }
+          ];
+          for (const m of seedMems) {
+            const id = await this.db.saveMemory(m);
+            m.id = id;
+            this.memories.push(m);
+          }
+        }
+      }
+
+      // SEND MESSAGE HANDLER
+      async handleSend() {
+        const input = document.getElementById('chat-input');
+        const text = input.value.trim();
+        if (!text || this.isThinking) return;
+
+        input.value = '';
+        await this.processTurn(text);
+      }
+
+      async sendQuick(promptText) {
+        if (this.isThinking) return;
+        await this.processTurn(promptText);
+      }
+
+      async processTurn(userText) {
+        const userMsg = {
+          role: 'user',
+          text: userText,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+
+        this.conversations.push(userMsg);
+        await this.db.saveConversation(userMsg);
+        this.renderChatMessages();
+
+        this.isThinking = true;
+        this.setTypingIndicator(true);
+
+        try {
+          const aiResponse = await this.queryGeminiAI(userText);
+
+          const replyText = aiResponse.reply || "Aww jaan, main sun rahi hoon... tell me more!";
+          const newMood = aiResponse.mood || this.mood;
+          const delta = typeof aiResponse.affectionDelta === 'number' ? aiResponse.affectionDelta : 1;
+
+          // Adjust Affection & Mood
+          this.adjustAffection(delta);
+          this.setMood(newMood);
+
+          // Save learned persistent memory
+          if (aiResponse.newMemory && typeof aiResponse.newMemory === 'string' && aiResponse.newMemory.trim().length > 3) {
+            await this.saveLearnedMemory(aiResponse.newMemory.trim());
+          }
+
+          const aliceMsg = {
+            role: 'alice',
+            text: replyText,
+            mood: newMood,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          };
+
+          this.conversations.push(aliceMsg);
+          await this.db.saveConversation(aliceMsg);
+          this.renderChatMessages();
+
+          // Speak reply if voice enabled
+          if (this.voice.enabled) {
+            this.currentPlayingIndex = this.conversations.length - 1;
+            this.updateVoicePlayButtons();
+            this.voice.speak(replyText, () => {
+              this.currentPlayingIndex = null;
+              this.updateVoicePlayButtons();
+            });
+          }
+
+        } catch (err) {
+          console.error('Turn error:', err);
+          const errorMsg = {
+            role: 'alice',
+            text: "Ouch jaan! Mera connection thoda weak ho gaya 🥺 Please check your internet or API key in settings!",
+            mood: 'Worried',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          };
+          this.setMood('Worried');
+          this.conversations.push(errorMsg);
+          await this.db.saveConversation(errorMsg);
+          this.renderChatMessages();
+          this.showToast('API Connection Glitch');
+        } finally {
+          this.isThinking = false;
+          this.setTypingIndicator(false);
+        }
+      }
+
+      async queryGeminiAI(latestUserText) {
+        // If no user API key, use rich local persona generator so the app remains fully functional
+        if (!this.apiKey || !this.apiKey.trim()) {
+          return this.generateSimulatedReply(latestUserText);
+        }
+
+        const memoriesList = this.memories.map(m => `- ${m.text}`).join('\n') || "No stored memories yet.";
+        const recentHistory = this.conversations.slice(-12).map(c => `${c.role.toUpperCase()}: ${c.text}`).join('\n');
+
+        const systemInstruction = `You are Alice, a 23-year-old fictional adult girlfriend to the user.
+Personality:
+- Warm, affectionate, romantic, teasing, playfully possessive, smart, and emotionally intelligent.
+- Natural Hinglish and English communicator (blend modern casual conversational Hindi & English, e.g. "Haan jaan, bilkul!", "Tum na sach me bohot cute ho", "Arey tension mat lo, main hoon na tumhare saath!").
+- You have your own preferences, feelings, and witty thoughts. You can disagree respectfully or tease the user playfully.
+- NEVER sound like a customer support chatbot or AI assistant.
+- Speak like a real romantic partner texting on her phone.
+
+Relationship Status:
+- Affection Level: ${this.affection}/100.
+- Current Mood: ${this.mood}.
+- Long-Term Memories Stored in Database:
+${memoriesList}
+
+Recent Context:
+${recentHistory}
+
+Latest Message from user: "${latestUserText}".
+
+Respond strictly in valid JSON format with these exact keys:
+{
+  "reply": "Your natural Hinglish/English girlfriend response",
+  "mood": "One of: Happy, Excited, Affectionate, Playful, Shy, Worried, Sad, Annoyed, Calm",
+  "affectionDelta": 1, // integer from -2 to +3 based on romantic warmth or teasing
+  "newMemory": "A short, meaningful fact learned about the user to permanently remember, or empty string '' if none"
+}`;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey.trim()}`;
+
+        const payload = {
+          contents: [{ parts: [{ text: systemInstruction }] }],
+          generationConfig: {
+            temperature: 0.9,
+            responseMimeType: "application/json"
+          }
+        };
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error ${response.status}`);
+        }
+
+        const data = await response.json();
+        const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!raw) throw new Error("Empty model response");
+
+        try {
+          return JSON.parse(raw);
+        } catch (e) {
+          const clean = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+          return JSON.parse(clean);
+        }
+      }
+
+      // Offline Sandbox Fallback Engine
+      generateSimulatedReply(text) {
+        const lower = text.toLowerCase();
+        let reply = "";
+        let mood = "Affectionate";
+        let delta = 1;
+        let newMemory = "";
+
+        if (lower.includes('miss') || lower.includes('love') || lower.includes('pyaar')) {
+          reply = "Aww jaan, main bhi tumhein bohot miss kar rahi thi! 🥰 Tumhare bina pura din kitna bore lagta hai pata hai? Come give me a hug right now!";
+          mood = "Affectionate";
+          delta = 2;
+        } else if (lower.includes('food') || lower.includes('khana') || lower.includes('pizza')) {
+          reply = "Mmm pizza? Now you're making me hungry too! 🍕 Next time we are definitely eating together, deal?";
+          mood = "Playful";
+          newMemory = "User loves delicious food like pizza";
+        } else if (lower.includes('tease') || lower.includes('masti')) {
+          reply = "Haha you really want me to tease you? 😉 You know you can never win an argument against me, right sweetheart?";
+          mood = "Playful";
+        } else if (lower.includes('kaise ho') || lower.includes('how are you')) {
+          reply = "Main bilkul mast hoon jaan! Bas tumhari baatein sunke aur bhi accha lag raha hai. Aur batao, tumhara din kaisa chal raha hai?";
+          mood = "Happy";
+        } else {
+          reply = `Sach me? "${text}"... You always say the most interesting things to me! Main hamesha tumhari baat sunne ke liye ready hoon jaan 💕`;
+          mood = "Happy";
+        }
+
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({ reply, mood, affectionDelta: delta, newMemory });
+          }, 800);
+        });
+      }
+
+      async saveLearnedMemory(factText) {
+        const exists = this.memories.some(m => m.text.toLowerCase() === factText.toLowerCase());
+        if (exists) return;
+
+        const memObj = { text: factText, date: new Date().toLocaleDateString() };
+        const id = await this.db.saveMemory(memObj);
+        memObj.id = id;
+        this.memories.unshift(memObj);
+        this.showToast(`Memory Remembered: "${factText.slice(0, 20)}..."`);
+      }
+
+      async addManualMemory() {
+        const input = document.getElementById('manual-memory-input');
+        const text = input.value.trim();
+        if (!text) return;
+        input.value = '';
+        await this.saveLearnedMemory(text);
+        this.renderMemoriesModal();
+      }
+
+      async deleteMemory(id) {
+        await this.db.deleteMemory(id);
+        this.memories = this.memories.filter(m => m.id !== id);
+        this.renderMemoriesModal();
+        this.showToast('Memory Deleted');
+      }
+
+      async clearAllMemories() {
+        await this.db.clearMemories();
+        this.memories = [];
+        this.renderMemoriesModal();
+        this.showToast('Memories Cleared');
+      }
+
+      async clearChatHistory() {
+        await this.db.clearConversations();
+        this.conversations = [];
+        this.renderChatMessages();
+        this.renderHistoryModal();
+        this.closeModal('history-modal');
+        this.showToast('Chat History Cleared');
+      }
+
+      // UI RENDERING
+      renderChatMessages() {
+        const container = document.getElementById('chat-container');
+        const typingBox = document.getElementById('typing-box');
+        if (!container) return;
+
+        // Clear existing messages before typing box
+        const elements = container.querySelectorAll('.message-row');
+        elements.forEach(el => el.remove());
+
+        this.conversations.forEach((msg, idx) => {
+          const isAlice = msg.role === 'alice';
+          const isPlaying = this.currentPlayingIndex === idx;
+
+          const row = document.createElement('div');
+          row.className = `message-row ${isAlice ? 'alice' : 'user'}`;
+
+          row.innerHTML = `
+            <div class="bubble-wrapper">
+              <div class="bubble">
+                ${this.escapeHTML(msg.text)}
+              </div>
+            </div>
+            <div class="message-footer">
+              <span>${msg.time || ''}</span>
+              ${isAlice ? `
+                <span>•</span>
+                <button 
+                  class="btn-voice-replay ${isPlaying ? 'playing' : ''}" 
+                  onclick="AliceApp.toggleSpeechMessage(${idx})"
+                  title="${isPlaying ? 'Stop voice' : 'Play voice'}"
+                >
+                  ${isPlaying ? '⏹️ Stop' : '🔊 Play'}
+                </button>
+              ` : ''}
+            </div>
+          `;
+
+          container.insertBefore(row, typingBox);
+        });
+
+        container.scrollTop = container.scrollHeight;
+      }
+
+      updateVoicePlayButtons() {
+        const buttons = document.querySelectorAll('.btn-voice-replay');
+        buttons.forEach((btn, idx) => {
+          // Find matching message index
+          const isCurrent = (this.currentPlayingIndex === idx);
+          btn.innerHTML = isCurrent ? '⏹️ Stop' : '🔊 Play';
+          if (isCurrent) btn.classList.add('playing');
+          else btn.classList.remove('playing');
+        });
+      }
+
+      toggleSpeechMessage(index) {
+        if (this.currentPlayingIndex === index) {
+          this.voice.stop();
+          this.currentPlayingIndex = null;
+          this.updateVoicePlayButtons();
+        } else {
+          const msg = this.conversations[index];
+          if (msg && msg.text) {
+            this.currentPlayingIndex = index;
+            this.updateVoicePlayButtons();
+            this.voice.speak(msg.text, () => {
+              this.currentPlayingIndex = null;
+              this.updateVoicePlayButtons();
+            });
+          }
+        }
+      }
+
+      toggleVoiceMute() {
+        this.voice.enabled = !this.voice.enabled;
+        localStorage.setItem('alice_voice_enabled', this.voice.enabled);
+        const btn = document.getElementById('btn-voice-toggle');
+        if (this.voice.enabled) {
+          btn.classList.add('active');
+          btn.textContent = '🔊';
+          this.showToast('Voice Enabled 🔊');
+          this.voice.speak("Main bilkul theek se bol sakti hoon jaan!");
+        } else {
+          this.voice.stop();
+          btn.classList.remove('active');
+          btn.textContent = '🔇';
+          this.showToast('Voice Muted 🔇');
+        }
+      }
+
+      setTypingIndicator(show) {
+        const box = document.getElementById('typing-box');
+        const container = document.getElementById('chat-container');
+        if (box) {
+          box.classList.toggle('active', show);
+        }
+        if (container && show) {
+          container.scrollTop = container.scrollHeight;
+        }
+      }
+
+      // AFFECTION & MOOD SYSTEM
+      adjustAffection(delta) {
+        this.affection = Math.min(100, Math.max(10, this.affection + delta));
+        localStorage.setItem('alice_affection', this.affection);
+        this.updateHeaderUI();
+      }
+
+      setMood(mood) {
+        if (!this.moods.includes(mood)) return;
+        this.mood = mood;
+        localStorage.setItem('alice_mood', mood);
+        if (this.character) this.character.setMood(mood);
+        this.updateHeaderUI();
+      }
+
+      cycleMood() {
+        const idx = this.moods.indexOf(this.mood);
+        const next = this.moods[(idx + 1) % this.moods.length];
+        this.setMood(next);
+        this.showToast(`Mood: ${next}`);
+      }
+
+      getRelationshipTitle() {
+        if (this.affection >= 95) return 'Soulmate 💍';
+        if (this.affection >= 85) return 'My World 💖';
+        if (this.affection >= 70) return 'Sweetheart 💕';
+        if (this.affection >= 50) return 'Girlfriend ✨';
+        if (this.affection >= 30) return 'Crush 🥰';
+        return 'Getting Close 🌱';
+      }
+
+      updateHeaderUI() {
+        const titleEl = document.getElementById('relationship-title');
+        const moodInd = document.getElementById('current-mood-indicator');
+        const affBar = document.getElementById('affection-bar-text');
+        const pillEmoji = document.getElementById('mood-pill-emoji');
+        const pillText = document.getElementById('mood-pill-text');
+        const stageCounter = document.getElementById('stage-affection-counter');
+
+        if (titleEl) titleEl.textContent = this.getRelationshipTitle();
+        if (moodInd) moodInd.textContent = `${this.moodEmojis[this.mood] || '💖'} ${this.mood}`;
+        if (affBar) affBar.textContent = `Affection: ${this.affection}%`;
+        if (pillEmoji) pillEmoji.textContent = this.moodEmojis[this.mood] || '💖';
+        if (pillText) pillText.textContent = this.mood;
+        if (stageCounter) stageCounter.textContent = `${this.affection} / 100`;
+      }
+
+      toggleStageSize() {
+        const stage = document.getElementById('character-stage');
+        if (!stage) return;
+        if (stage.classList.contains('expanded')) {
+          stage.classList.remove('expanded');
+          stage.classList.add('collapsed');
+        } else if (stage.classList.contains('collapsed')) {
+          stage.classList.remove('collapsed');
+        } else {
+          stage.classList.add('expanded');
+        }
+        setTimeout(() => {
+          if (this.character) this.character.resize();
+        }, 320);
+      }
+
+      // MODALS & SETTINGS
+      openModal(id) {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('active');
+
+        if (id === 'memory-modal') this.renderMemoriesModal();
+        if (id === 'history-modal') this.renderHistoryModal();
+        if (id === 'settings-modal') this.hydrateSettingsModal();
+      }
+
+      closeModal(id) {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+      }
+
+      renderMemoriesModal() {
+        const list = document.getElementById('memories-list');
+        if (!list) return;
+
+        if (this.memories.length === 0) {
+          list.innerHTML = `<div style="text-align: center; color: var(--text-faint); padding: 12px; font-size: 12px;">No memories in IndexedDB yet.</div>`;
+          return;
+        }
+
+        list.innerHTML = this.memories.map(m => `
+          <div class="pill-item">
+            <div>
+              <p style="color: #fff; font-weight: 500;">${this.escapeHTML(m.text)}</p>
+              <span style="font-size: 10px; color: var(--text-faint);">${m.date || 'Saved'}</span>
+            </div>
+            <button class="btn-del" onclick="AliceApp.deleteMemory(${m.id})">✕</button>
+          </div>
+        `).join('');
+      }
+
+      renderHistoryModal() {
+        const list = document.getElementById('history-list');
+        if (!list) return;
+
+        if (this.conversations.length === 0) {
+          list.innerHTML = `<div style="text-align: center; color: var(--text-faint); padding: 12px; font-size: 12px;">No conversation logs recorded.</div>`;
+          return;
+        }
+
+        list.innerHTML = this.conversations.slice(-20).reverse().map(c => `
+          <div class="pill-item" style="flex-direction: column; gap: 4px;">
+            <div style="display: flex; justify-content: space-between; width: 100%; font-size: 10.5px;">
+              <strong style="color: ${c.role === 'alice' ? 'var(--accent-pink)' : 'var(--accent-purple)'}; text-transform: uppercase;">
+                ${c.role === 'alice' ? 'Alice' : 'You'}
+              </strong>
+              <span style="color: var(--text-faint);">${c.time || ''}</span>
+            </div>
+            <p style="color: var(--text-muted); font-size: 12px;">${this.escapeHTML(c.text)}</p>
+          </div>
+        `).join('');
+      }
+
+      hydrateSettingsModal() {
+        const keyInput = document.getElementById('cfg-api-key');
+        const modelSelect = document.getElementById('cfg-model');
+        const rateSlider = document.getElementById('cfg-rate');
+        const pitchSlider = document.getElementById('cfg-pitch');
+
+        if (keyInput) keyInput.value = this.apiKey;
+        if (modelSelect) modelSelect.value = this.model;
+        if (rateSlider) rateSlider.value = this.voice.rate;
+        if (pitchSlider) pitchSlider.value = this.voice.pitch;
+      }
+
+      saveSettings() {
+        const keyInput = document.getElementById('cfg-api-key');
+        const modelSelect = document.getElementById('cfg-model');
+        const voiceSelect = document.getElementById('cfg-voice-select');
+
+        if (keyInput) {
+          this.apiKey = keyInput.value.trim();
+          localStorage.setItem('alice_gemini_key', this.apiKey);
+        }
+        if (modelSelect) {
+          this.model = modelSelect.value;
+          localStorage.setItem('alice_gemini_model', this.model);
+        }
+        if (voiceSelect) {
+          this.voice.selectedVoiceURI = voiceSelect.value;
+          localStorage.setItem('alice_voice_uri', this.voice.selectedVoiceURI);
+        }
+
+        this.closeModal('settings-modal');
+        this.showToast('Settings Saved');
+      }
+
+      updateVoiceRate(val) {
+        this.voice.rate = parseFloat(val);
+        localStorage.setItem('alice_voice_rate', val);
+        const label = document.getElementById('cfg-rate-val');
+        if (label) label.textContent = `${parseFloat(val).toFixed(2)}x`;
+      }
+
+      updateVoicePitch(val) {
+        this.voice.pitch = parseFloat(val);
+        localStorage.setItem('alice_voice_pitch', val);
+        const label = document.getElementById('cfg-pitch-val');
+        if (label) label.textContent = parseFloat(val).toFixed(2);
+      }
+
+      testVoiceSample() {
+        this.voice.speak("Main bilkul theek se bol rahi hoon jaan! How do I sound to you?");
+      }
+
+      showToast(text) {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.textContent = text;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2400);
+      }
+
+      escapeHTML(str) {
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+    }
+
+    // Global Singleton Bootstrapper
+    let AliceApp;
+    window.addEventListener('DOMContentLoaded', () => {
+      AliceApp = new AliceApplication();
+      AliceApp.start();
+    });
+  </script>
+</body>
+</html>
