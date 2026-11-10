@@ -1,2425 +1,2007 @@
-html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Project Alice — Personal AI Girlfriend</title>
-  
+  <title>Project Alice — AI Companion & 3D Studio</title>
+  <!-- Three.js & GLTF Loader -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
   <style>
-    /* ==========================================================================
-       RESET & THEME DESIGN SYSTEM (PURE EMBEDDED CSS - ZERO EXTERNAL DEPS)
-       ========================================================================== */
     :root {
-      --bg-dark: #0a0812;
-      --bg-surface: #130f21;
-      --bg-card: #1b152d;
-      --bg-card-hover: #231c3b;
-      --bg-glass: rgba(22, 17, 36, 0.88);
-      --border-subtle: rgba(255, 255, 255, 0.08);
-      --border-glow: rgba(255, 111, 169, 0.35);
-      
-      --accent-pink: #ff6fa9;
-      --accent-pink-hover: #ff5297;
-      --accent-purple: #9d4edd;
-      --accent-violet: #7928ca;
-      --accent-cyan: #38bdf8;
-      
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --text-faint: #64748b;
-      
-      --radius-sm: 8px;
-      --radius-md: 14px;
-      --radius-lg: 20px;
-      --radius-full: 9999px;
-      
-      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
-      --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.55), 0 0 25px rgba(255, 111, 169, 0.18);
-      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --bg: #09080e;
+      --panel: rgba(22, 18, 34, 0.88);
+      --panel-border: rgba(255, 111, 169, 0.22);
+      --accent: #ff6fa9;
+      --accent-glow: rgba(255, 111, 169, 0.4);
+      --accent-secondary: #a855f7;
+      --text: #f3f0fa;
+      --text-muted: #9f96b8;
+      --user-bubble: linear-gradient(135deg, #a855f7, #ec4899);
+      --alice-bubble: rgba(30, 24, 46, 0.95);
     }
-
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       -webkit-tap-highlight-color: transparent;
-      user-select: none;
     }
-
     body {
-      background-color: var(--bg-dark);
-      color: var(--text-main);
-      font-family: var(--font-family);
-      min-height: 100vh;
+      background-color: var(--bg);
+      color: var(--text);
       display: flex;
       justify-content: center;
-      align-items: center;
-      overflow-x: hidden;
-      line-height: 1.4;
+      min-height: 100vh;
+      background-image: radial-gradient(circle at 50% 10%, rgba(168, 85, 247, 0.12), transparent 60%);
+      overflow: hidden;
     }
-
-    /* Mobile-first app container */
     #app-container {
       width: 100%;
       max-width: 480px;
       height: 100vh;
-      max-height: 940px;
-      background: var(--bg-surface);
       display: flex;
       flex-direction: column;
       position: relative;
-      overflow: hidden;
-      box-shadow: 0 0 60px rgba(0, 0, 0, 0.85), 0 0 2px var(--border-glow);
+      background: var(--panel);
+      box-shadow: 0 0 35px rgba(0, 0, 0, 0.8);
+      border-left: 1px solid var(--panel-border);
+      border-right: 1px solid var(--panel-border);
     }
-
-    @media (min-width: 500px) {
-      #app-container {
-        height: 94vh;
-        border-radius: var(--radius-lg);
-        border: 1px solid var(--border-subtle);
-      }
-    }
-
-    /* ==========================================================================
-       TOP APP BAR / HEADER
-       ========================================================================== */
     header {
-      background: var(--bg-glass);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border-bottom: 1px solid var(--border-subtle);
       padding: 10px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      z-index: 20;
+      border-bottom: 1px solid var(--panel-border);
+      backdrop-filter: blur(12px);
+      z-index: 10;
     }
-
-    .alice-brand {
+    .profile-info {
       display: flex;
       align-items: center;
       gap: 10px;
-      cursor: pointer;
     }
-
-    .avatar-wrapper {
-      position: relative;
-      width: 42px;
-      height: 42px;
-      border-radius: var(--radius-full);
-      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2px;
-      box-shadow: 0 0 12px rgba(255, 111, 169, 0.4);
-    }
-
-    .avatar-img {
-      width: 100%;
-      height: 100%;
-      background: #251b3a;
-      border-radius: var(--radius-full);
+    .avatar-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff6fa9, #a855f7);
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      color: var(--accent-pink);
-      font-size: 19px;
+      color: #fff;
+      box-shadow: 0 0 10px var(--accent-glow);
     }
-
-    .status-dot {
-      width: 11px;
-      height: 11px;
-      background: #10b981;
-      border: 2px solid var(--bg-surface);
-      border-radius: var(--radius-full);
-      position: absolute;
-      bottom: 0;
-      right: 0;
+    .name-col {
+      display: flex;
+      flex-direction: column;
     }
-
-    .brand-meta h1 {
+    .name-title {
       font-size: 15px;
       font-weight: 700;
-      letter-spacing: 0.3px;
       display: flex;
       align-items: center;
       gap: 6px;
     }
-
-    .relationship-badge {
-      font-size: 10px;
-      padding: 2px 7px;
-      background: rgba(255, 111, 169, 0.15);
-      color: var(--accent-pink);
-      border-radius: var(--radius-full);
-      font-weight: 600;
-      border: 1px solid rgba(255, 111, 169, 0.25);
-    }
-
     .sub-meta {
       font-size: 11px;
       color: var(--text-muted);
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-top: 1px;
+      gap: 8px;
     }
-
     .header-actions {
       display: flex;
       align-items: center;
       gap: 6px;
     }
-
-    .btn-icon {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-main);
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--panel-border);
+      color: var(--text);
       width: 34px;
       height: 34px;
-      border-radius: var(--radius-md);
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       font-size: 14px;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
     }
-
-    .btn-icon:active, .btn-icon:hover {
-      background: rgba(255, 111, 169, 0.2);
-      border-color: var(--accent-pink);
-      color: var(--accent-pink);
+    .icon-btn:active {
+      transform: scale(0.92);
+      border-color: var(--accent);
     }
-
-    /* ==========================================================================
-       CANVAS CHARACTER STAGE (60 FPS ANIME ENGINE)
-       ========================================================================== */
+    .icon-btn.highlight {
+      background: linear-gradient(135deg, rgba(255,111,169,0.3), rgba(168,85,247,0.3));
+      border-color: var(--accent);
+      color: #fff;
+    }
     #character-stage {
       position: relative;
       width: 100%;
-      height: 210px;
-      background: radial-gradient(circle at center 30%, #261942 0%, #0d0918 80%);
-      border-bottom: 1px solid var(--border-subtle);
+      height: 230px;
+      background: radial-gradient(circle at 50% 60%, rgba(255, 111, 169, 0.15), transparent 70%), #0d0b14;
+      border-bottom: 1px solid var(--panel-border);
       display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       overflow: hidden;
-      flex-shrink: 0;
-      transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: height 0.3s ease;
     }
-
     #character-stage.collapsed {
-      height: 80px;
+      height: 0;
+      border-bottom: none;
     }
-
-    #character-stage.expanded {
-      height: 320px;
-    }
-
     canvas#aliceCanvas {
       width: 100%;
       height: 100%;
       display: block;
-      cursor: pointer;
     }
-
-    .stage-overlays {
+    .stage-hud {
       position: absolute;
       top: 8px;
-      left: 10px;
-      right: 10px;
+      left: 12px;
+      right: 12px;
       display: flex;
       justify-content: space-between;
-      align-items: center;
       pointer-events: none;
+      z-index: 2;
     }
-
-    .stage-pill {
-      pointer-events: auto;
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: var(--radius-full);
-      background: rgba(13, 9, 24, 0.65);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .stage-pill.clickable {
-      cursor: pointer;
-    }
-
-    .stage-pill.clickable:hover {
-      border-color: var(--accent-pink);
-      color: var(--accent-pink);
-    }
-
-    .speech-indicator {
-      display: none;
-      align-items: center;
-      gap: 3px;
-      position: absolute;
-      bottom: 8px;
-      right: 12px;
-      background: rgba(13, 9, 24, 0.85);
-      padding: 4px 9px;
-      border-radius: var(--radius-full);
-      border: 1px solid var(--border-glow);
+    .pill {
+      background: rgba(14, 11, 23, 0.75);
+      border: 1px solid var(--panel-border);
+      padding: 3px 8px;
+      border-radius: 12px;
       font-size: 10px;
-      color: var(--accent-pink);
+      font-weight: 600;
+      backdrop-filter: blur(8px);
+      pointer-events: auto;
     }
-
-    .speech-indicator.active {
-      display: flex;
-    }
-
-    .wave-bar {
-      width: 2.5px;
-      height: 10px;
-      background: var(--accent-pink);
-      border-radius: 2px;
-      animation: wave 0.8s ease-in-out infinite alternate;
-    }
-    .wave-bar:nth-child(2) { animation-delay: 0.2s; height: 14px; }
-    .wave-bar:nth-child(3) { animation-delay: 0.4s; height: 8px; }
-
-    @keyframes wave {
-      0% { transform: scaleY(0.4); }
-      100% { transform: scaleY(1.3); }
-    }
-
-    /* ==========================================================================
-       CHAT LOG & MESSAGE CONTAINER
-       ========================================================================== */
-    #chat-container {
+    #chat-stream {
       flex: 1;
       overflow-y: auto;
-      padding: 14px 12px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
       gap: 12px;
       scroll-behavior: smooth;
     }
-
-    #chat-container::-webkit-scrollbar {
-      width: 4px;
-    }
-    #chat-container::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.12);
-      border-radius: 4px;
-    }
-
-    .message-row {
+    .msg-row {
       display: flex;
       flex-direction: column;
       max-width: 86%;
       animation: fadeIn 0.25s ease-out;
     }
-
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
-    .message-row.alice {
-      align-self: flex-start;
-    }
-
-    .message-row.user {
+    .msg-row.user {
       align-self: flex-end;
-    }
-
-    .bubble-wrapper {
-      display: flex;
       align-items: flex-end;
-      gap: 6px;
     }
-
+    .msg-row.alice {
+      align-self: flex-start;
+      align-items: flex-start;
+    }
     .bubble {
       padding: 10px 14px;
-      font-size: 13.5px;
+      border-radius: 16px;
+      font-size: 14px;
       line-height: 1.45;
-      position: relative;
       word-break: break-word;
-      user-select: text;
+      position: relative;
     }
-
-    .message-row.alice .bubble {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      color: #ede9fe;
-      border-radius: 16px 16px 16px 3px;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+    .user .bubble {
+      background: var(--user-bubble);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
     }
-
-    .message-row.user .bubble {
-      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
-      color: #ffffff;
-      border-radius: 16px 16px 3px 16px;
-      box-shadow: 0 4px 14px rgba(255, 111, 169, 0.28);
+    .alice .bubble {
+      background: var(--alice-bubble);
+      color: var(--text);
+      border: 1px solid var(--panel-border);
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
     }
-
-    .message-footer {
+    .meta-bar {
+      margin-top: 4px;
       display: flex;
       align-items: center;
       gap: 8px;
       font-size: 10px;
-      color: var(--text-faint);
-      margin-top: 3px;
-      padding: 0 4px;
-    }
-
-    .message-row.user .message-footer {
-      justify-content: flex-end;
-    }
-
-    .btn-voice-replay {
-      background: transparent;
-      border: none;
       color: var(--text-muted);
+    }
+    .voice-play-btn {
+      background: rgba(255, 111, 169, 0.15);
+      border: 1px solid var(--panel-border);
+      color: var(--accent);
+      padding: 2px 7px;
+      border-radius: 10px;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      font-size: 10px;
-      transition: color 0.15s;
-    }
-
-    .btn-voice-replay:hover, .btn-voice-replay.playing {
-      color: var(--accent-pink);
-    }
-
-    /* Typing indicator */
-    .typing-box {
-      align-self: flex-start;
-      display: none;
-      padding: 10px 14px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 16px 16px 16px 3px;
-      gap: 4px;
-      align-items: center;
-    }
-
-    .typing-box.active {
       display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      transition: background 0.2s;
     }
-
-    .dot {
-      width: 6px;
-      height: 6px;
-      background: var(--accent-pink);
-      border-radius: 50%;
-      animation: blink 1.2s infinite both;
+    .voice-play-btn:active {
+      background: var(--accent);
+      color: #fff;
     }
-    .dot:nth-child(2) { animation-delay: 0.2s; }
-    .dot:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes blink {
-      0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
-      40% { opacity: 1; transform: scale(1.1); }
-    }
-
-    /* ==========================================================================
-       QUICK CHIPS / BANTER SUGGESTIONS
-       ========================================================================== */
-    .chips-tray {
-      padding: 4px 12px 6px;
+    .quick-chips {
+      padding: 6px 12px;
       display: flex;
       gap: 6px;
       overflow-x: auto;
       white-space: nowrap;
-      flex-shrink: 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
       scrollbar-width: none;
     }
-
-    .chips-tray::-webkit-scrollbar {
+    .quick-chips::-webkit-scrollbar {
       display: none;
     }
-
     .chip {
       background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border-subtle);
-      color: #cbd5e1;
+      border: 1px solid var(--panel-border);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 14px;
       font-size: 11px;
-      padding: 5px 11px;
-      border-radius: var(--radius-full);
       cursor: pointer;
-      transition: all 0.2s;
+      flex-shrink: 0;
     }
-
-    .chip:active, .chip:hover {
-      background: rgba(255, 111, 169, 0.18);
-      border-color: var(--accent-pink);
-      color: var(--accent-pink);
+    .chip:active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
     }
-
-    /* ==========================================================================
-       BOTTOM INPUT CONTROL BAR
-       ========================================================================== */
-    footer {
-      background: var(--bg-glass);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border-top: 1px solid var(--border-subtle);
-      padding: 8px 12px 10px;
+    .composer-area {
+      padding: 10px 12px 14px;
       display: flex;
       align-items: center;
       gap: 8px;
-      flex-shrink: 0;
+      background: rgba(14, 11, 23, 0.95);
+      border-top: 1px solid var(--panel-border);
     }
-
-    .input-wrapper {
+    .composer-area input {
       flex: 1;
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-
-    #chat-input {
-      width: 100%;
-      background: rgba(13, 9, 24, 0.9);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-main);
-      font-family: inherit;
-      font-size: 13.5px;
-      padding: 9px 38px 9px 14px;
-      border-radius: var(--radius-full);
-      outline: none;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-      user-select: text;
-    }
-
-    #chat-input:focus {
-      border-color: var(--accent-pink);
-      box-shadow: 0 0 12px rgba(255, 111, 169, 0.25);
-    }
-
-    .btn-input-mute {
-      position: absolute;
-      right: 8px;
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      padding: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid var(--panel-border);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 20px;
       font-size: 14px;
+      outline: none;
     }
-
-    .btn-input-mute.active {
-      color: var(--accent-pink);
+    .composer-area input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
     }
-
-    .btn-send {
-      width: 38px;
-      height: 38px;
-      border-radius: var(--radius-full);
-      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+    .send-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff6fa9, #a855f7);
       border: none;
       color: #fff;
+      font-size: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 15px;
-      flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(255, 111, 169, 0.35);
-      transition: transform 0.15s ease;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+    .send-btn:active {
+      transform: scale(0.9);
     }
 
-    .btn-send:active {
-      transform: scale(0.92);
-    }
-
-    /* ==========================================================================
-       MODAL DIALOGS (MEMORY HUB, HISTORY, SETTINGS)
-       ========================================================================== */
+    /* Modals */
     .modal-overlay {
-      display: none;
-      position: fixed;
+      position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, 0.78);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 50;
+      display: none;
+      flex-direction: column;
       padding: 16px;
     }
-
     .modal-overlay.active {
       display: flex;
     }
-
-    .modal-window {
-      background: var(--bg-card);
-      border: 1px solid var(--border-glow);
-      border-radius: var(--radius-lg);
-      width: 100%;
-      max-width: 440px;
-      max-height: 86vh;
+    .modal-card {
+      background: #141120;
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      padding: 16px;
+      flex: 1;
       display: flex;
       flex-direction: column;
-      box-shadow: var(--shadow-lg);
-      animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
     }
-
-    @keyframes modalPop {
-      from { transform: scale(0.92); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
     .modal-header {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border-subtle);
       display: flex;
-      align-items: center;
       justify-content: space-between;
-    }
-
-    .modal-header h2 {
-      font-size: 15px;
-      font-weight: 700;
-      color: #fff;
-      display: flex;
       align-items: center;
-      gap: 6px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 8px;
     }
-
-    .btn-close-modal {
-      background: transparent;
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .close-btn {
+      background: none;
       border: none;
       color: var(--text-muted);
-      font-size: 18px;
+      font-size: 20px;
       cursor: pointer;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: var(--radius-sm);
     }
-
-    .btn-close-modal:hover {
-      color: #fff;
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    .modal-body {
-      padding: 16px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      user-select: text;
-    }
-
-    .form-group {
+    .setting-group {
+      margin-bottom: 14px;
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
-
-    .form-label {
-      font-size: 11.5px;
+    .setting-label {
+      font-size: 12px;
       font-weight: 600;
       color: var(--text-muted);
-      display: flex;
-      justify-content: space-between;
     }
-
-    .form-input, .form-select {
-      background: rgba(10, 8, 18, 0.85);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-main);
-      border-radius: var(--radius-md);
+    .setting-input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--panel-border);
+      color: #fff;
       padding: 8px 12px;
+      border-radius: 8px;
       font-size: 13px;
       outline: none;
-      width: 100%;
-      user-select: text;
     }
-
-    .form-input:focus, .form-select:focus {
-      border-color: var(--accent-pink);
-    }
-
-    .range-group {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .range-input {
-      flex: 1;
-      accent-color: var(--accent-pink);
-    }
-
-    .pill-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      max-height: 240px;
-      overflow-y: auto;
-    }
-
-    .pill-item {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 9px 12px;
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 10px;
-      font-size: 12.5px;
-    }
-
-    .btn-del {
-      background: transparent;
+    .setting-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
       border: none;
-      color: #ef4444;
-      cursor: pointer;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
       font-size: 13px;
-      padding: 2px 6px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 4px;
     }
-
-    .btn-del:hover {
-      color: #f87171;
-    }
-
-    .audition-box {
-      background: rgba(255, 111, 169, 0.05);
-      border: 1px dashed var(--border-glow);
-      padding: 10px;
-      border-radius: var(--radius-md);
+    .item-list {
       display: flex;
       flex-direction: column;
       gap: 8px;
+      margin-top: 8px;
     }
-
-    .audition-buttons {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+    .list-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .delete-item-btn {
+      color: #ef4444;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .audition-box {
+      display: flex;
       gap: 6px;
+      margin-top: 4px;
     }
-
-    .btn-audition {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-main);
+    .audition-btn {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--panel-border);
+      color: #fff;
       padding: 6px 4px;
-      border-radius: var(--radius-sm);
-      font-size: 10.5px;
+      border-radius: 6px;
+      font-size: 11px;
       cursor: pointer;
       text-align: center;
-      transition: all 0.2s;
+    }
+    .audition-btn.active {
+      border-color: var(--accent);
+      background: rgba(255, 111, 169, 0.25);
     }
 
-    .btn-audition:hover, .btn-audition.active {
-      background: rgba(255, 111, 169, 0.2);
-      border-color: var(--accent-pink);
-      color: var(--accent-pink);
+    /* 3D CHARACTER STUDIO OVERLAY */
+    #studioOverlay {
+      position: absolute;
+      inset: 0;
+      background: #090810;
+      z-index: 40;
+      display: none;
+      flex-direction: column;
     }
-
-    .modal-footer {
-      padding: 12px 16px;
-      border-top: 1px solid var(--border-subtle);
+    #studioOverlay.active {
       display: flex;
-      justify-content: flex-end;
-      gap: 8px;
     }
-
-    .btn-action {
-      padding: 7px 14px;
-      border-radius: var(--radius-md);
-      font-size: 12.5px;
-      font-weight: 600;
-      cursor: pointer;
+    #threeCanvasContainer {
+      flex: 1;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      touch-action: none;
+    }
+    #studioHud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      pointer-events: none;
+    }
+    #studioHud > * {
+      pointer-events: auto;
+    }
+    .studio-panel {
+      background: rgba(18, 14, 28, 0.94);
+      border-top: 1px solid var(--panel-border);
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      backdrop-filter: blur(16px);
+      z-index: 10;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+    .studio-tab-bar {
+      display: flex;
+      gap: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 6px;
+      overflow-x: auto;
+    }
+    .studio-tab {
+      background: none;
       border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 8px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .studio-tab.active {
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent);
+    }
+    .studio-tab-content {
+      display: none;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 4px 0;
+    }
+    .studio-tab-content.active {
+      display: flex;
+    }
+    .option-chip {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--panel-border);
+      color: var(--text);
+      padding: 5px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      cursor: pointer;
       transition: all 0.2s;
     }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+    .option-chip.selected {
+      background: var(--accent);
       color: #fff;
+      border-color: #fff;
     }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--text-main);
-    }
-
-    .btn-danger {
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #f87171;
-    }
-
-    /* Toast banner */
-    #toast {
-      position: fixed;
-      bottom: 75px;
+    .interaction-toast {
+      position: absolute;
+      top: 54px;
       left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      background: rgba(27, 21, 45, 0.95);
-      backdrop-filter: blur(8px);
-      border: 1px solid var(--accent-pink);
+      transform: translateX(-50%);
+      background: rgba(20, 16, 32, 0.9);
+      border: 1px solid var(--accent);
       color: #fff;
-      padding: 8px 16px;
-      border-radius: var(--radius-full);
-      font-size: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-      z-index: 200;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
       opacity: 0;
+      transition: opacity 0.3s;
       pointer-events: none;
-      transition: all 0.25s ease;
+      z-index: 15;
+      text-align: center;
+      max-width: 90%;
     }
-
-    #toast.show {
-      transform: translateX(-50%) translateY(0);
+    .interaction-toast.visible {
       opacity: 1;
+    }
+    .adult-toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: rgba(255, 111, 169, 0.08);
+      border: 1px dashed var(--accent);
+      border-radius: 10px;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
-
-  <!-- MAIN APP CONTAINER -->
-  <div id="app-container">
-
-    <!-- HEADER BAR -->
-    <header>
-      <div class="alice-brand" onclick="AliceApp.cycleMood()">
-        <div class="avatar-wrapper">
-          <div class="avatar-img">A</div>
-          <div class="status-dot"></div>
+<div id="app-container">
+  <header>
+    <div class="profile-info">
+      <div class="avatar-badge">A</div>
+      <div class="name-col">
+        <div class="name-title">Alice <span id="headerStatusTag" style="font-size:11px; color:#ff6fa9; font-weight:normal;">Sweetheart 💕</span></div>
+        <div class="sub-meta">
+          <span id="headerMood">✨ Happy</span>
+          <span>•</span>
+          <span id="headerAffection">Affection: 82%</span>
         </div>
-        <div class="brand-meta">
-          <h1>
-            Alice 
-            <span id="relationship-title" class="relationship-badge">Sweetheart 💕</span>
-          </h1>
-          <div class="sub-meta">
-            <span id="current-mood-indicator">💖 Affectionate</span> • 
-            <span id="affection-bar-text">Affection: 75%</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="header-actions">
-        <!-- Stage Toggle -->
-        <button class="btn-icon" onclick="AliceApp.toggleStageSize()" title="Toggle Character Size">👁️</button>
-        <!-- Memory Hub -->
-        <button class="btn-icon" onclick="AliceApp.openModal('memory-modal')" title="Memory Hub">🧠</button>
-        <!-- Chat History -->
-        <button class="btn-icon" onclick="AliceApp.openModal('history-modal')" title="History">📜</button>
-        <!-- Settings -->
-        <button class="btn-icon" onclick="AliceApp.openModal('settings-modal')" title="Settings">⚙️</button>
-      </div>
-    </header>
-
-    <!-- CHARACTER CANVAS STAGE -->
-    <div id="character-stage">
-      <canvas id="aliceCanvas"></canvas>
-
-      <!-- Stage Overlays -->
-      <div class="stage-overlays">
-        <div class="stage-pill clickable" onclick="AliceApp.cycleMood()">
-          <span id="mood-pill-emoji">💖</span>
-          <span id="mood-pill-text">Affectionate</span>
-        </div>
-        <div class="stage-pill">
-          <span>❤️</span>
-          <span id="stage-affection-counter">75 / 100</span>
-        </div>
-      </div>
-
-      <!-- Realtime Audio Wave Visualizer -->
-      <div id="speech-wave" class="speech-indicator">
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <div class="wave-bar"></div>
-        <span style="margin-left: 4px;">Speaking</span>
       </div>
     </div>
-
-    <!-- CHAT MESSAGES LOG -->
-    <div id="chat-container">
-      <!-- Typing Box -->
-      <div id="typing-box" class="typing-box">
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <span style="font-size: 11px; color: var(--text-muted); margin-left: 4px;">Alice is typing...</span>
-      </div>
+    <div class="header-actions">
+      <button class="icon-btn highlight" id="openStudioBtn" title="3D Office Studio">🏢 3D</button>
+      <button class="icon-btn" id="toggleStageBtn" title="Toggle 2D Portrait">👁️</button>
+      <button class="icon-btn" id="memoryHubBtn" title="Memory Hub">🧠</button>
+      <button class="icon-btn" id="historyBtn" title="History Archive">📜</button>
+      <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
     </div>
+  </header>
 
-    <!-- QUICK CONVERSATION CHIPS -->
-    <div class="chips-tray">
-      <button class="chip" onclick="AliceApp.sendQuick('I missed you so much today! ❤️')">Missed you ❤️</button>
-      <button class="chip" onclick="AliceApp.sendQuick('Tell me what you like the most about us? ✨')">About us ✨</button>
-      <button class="chip" onclick="AliceApp.sendQuick('Aaj ka din kaisa raha jaan? 🌸')">Hinglish banter 🌸</button>
-      <button class="chip" onclick="AliceApp.sendQuick('Can you remember my favorite food? 🍕')">Test memory 🧠</button>
-      <button class="chip" onclick="AliceApp.sendQuick('Tease me a little bit 😉')">Tease me 😉</button>
+  <!-- 2D Canvas Portrait Stage -->
+  <div id="character-stage">
+    <div class="stage-hud">
+      <div class="pill" id="hudMood">✨ Happy</div>
+      <div class="pill" id="hudAffection">❤️ 82 / 100</div>
     </div>
-
-    <!-- BOTTOM INPUT ROW -->
-    <footer>
-      <div class="input-wrapper">
-        <input 
-          type="text" 
-          id="chat-input" 
-          placeholder="Message Alice in Hinglish or English..." 
-          autocomplete="off"
-        />
-        <button 
-          id="btn-voice-toggle" 
-          class="btn-input-mute active" 
-          onclick="AliceApp.toggleVoiceMute()" 
-          title="Toggle Voice"
-        >
-          🔊
-        </button>
-      </div>
-      <button class="btn-send" onclick="AliceApp.handleSend()" title="Send">
-        ➤
-      </button>
-    </footer>
-
+    <canvas id="aliceCanvas" width="400" height="230"></canvas>
   </div>
 
-  <!-- ================= MODALS ================= -->
+  <!-- Chat Stream -->
+  <div id="chat-stream"></div>
 
-  <!-- 1. MEMORY HUB MODAL -->
-  <div id="memory-modal" class="modal-overlay">
-    <div class="modal-window">
+  <!-- Quick Action Chips -->
+  <div class="quick-chips">
+    <div class="chip" data-text="Missed you ❤️">Missed you ❤️</div>
+    <div class="chip" data-text="What are you thinking right now? ✨">About us ✨</div>
+    <div class="chip" data-text="Kuch exciting batao na! 🌸">Hinglish banter 🌸</div>
+    <div class="chip" data-text="Do you remember my name and what I like? 🧠">Test memory 🧠</div>
+    <div class="chip" data-text="You are teasing me again 😏">Tease me 😏</div>
+  </div>
+
+  <!-- Composer Area -->
+  <div class="composer-area">
+    <input type="text" id="userInput" placeholder="Message Alice in Hinglish or English..." autocomplete="off">
+    <button class="send-btn" id="sendBtn">➤</button>
+  </div>
+
+  <!-- 3D EXECUTIVE OFFICE & CHARACTER STUDIO -->
+  <div id="studioOverlay">
+    <div id="studioHud">
+      <div class="pill" id="studioMoodPill">🏢 Alice's Office</div>
+      <div style="display:flex; gap:6px;">
+        <button class="icon-btn" id="lightingBtn" title="Change Lighting Preset">☀️ Day</button>
+        <button class="icon-btn" id="reset3DCameraBtn" title="Reset View">🔄</button>
+        <button class="icon-btn" id="closeStudioBtn" title="Return to Chat" style="background:#ef4444; color:#fff;">✕</button>
+      </div>
+    </div>
+
+    <div class="interaction-toast" id="interactionToast">Alice looks up from her desk and smiles at you...</div>
+
+    <div id="threeCanvasContainer"></div>
+
+    <div class="studio-panel">
+      <!-- Studio Tab Bar -->
+      <div class="studio-tab-bar">
+        <button class="studio-tab active" data-tab="actions">💖 Actions</button>
+        <button class="studio-tab" data-tab="touch">✨ Touch</button>
+        <button class="studio-tab" data-tab="custom">👗 Customization</button>
+        <button class="studio-tab" data-tab="env">🌆 Office Light</button>
+      </div>
+
+      <!-- Tab 1: Actions -->
+      <div class="studio-tab-content active" id="tab-actions">
+        <button class="option-chip" data-action="gentle-wave">Gentle Wave 👋</button>
+        <button class="option-chip" data-action="shy-blush">Shy Smile & Blush 🙈</button>
+        <button class="option-chip" data-action="blow-kiss">Blow Sweet Kiss 💋</button>
+        <button class="option-chip" data-action="look-desk">Work at Desk 💻</button>
+        <button class="option-chip" data-action="twirl">Romantic Twirl 💃</button>
+      </div>
+
+      <!-- Tab 2: Touch Reactions -->
+      <div class="studio-tab-content" id="tab-touch">
+        <button class="option-chip" data-touch="head-pat">Pat Her Head 💆‍♀️</button>
+        <button class="option-chip" data-touch="hold-hand">Hold Her Hand 🤝</button>
+        <button class="option-chip" data-touch="tease-cheek">Pinch Cheek 🤏</button>
+        <button class="option-chip" data-touch="offer-coffee">Bring Coffee ☕</button>
+      </div>
+
+      <!-- Tab 3: Customization -->
+      <div class="studio-tab-content" id="tab-custom">
+        <div style="width:100%; font-size:10px; color:var(--text-muted);">Hairstyle:</div>
+        <div class="option-chip selected" data-type="hair" data-val="twin-tails">Twin Tails</div>
+        <div class="option-chip" data-type="hair" data-val="long-straight">Long Straight</div>
+        <div class="option-chip" data-type="hair" data-val="elegant-bun">Office Bun</div>
+
+        <div style="width:100%; font-size:10px; color:var(--text-muted); margin-top:4px;">Outfit:</div>
+        <div class="option-chip selected" data-type="outfit" data-val="date-dress">Blazer Dress 🌸</div>
+        <div class="option-chip" data-type="outfit" data-val="casual-knit">Executive Knit ☕</div>
+        <div class="option-chip" id="adultOutfitChip" data-type="outfit" data-val="evening-glam" style="display:none;">Evening Silk 🌙</div>
+      </div>
+
+      <!-- Tab 4: Environment Lighting -->
+      <div class="studio-tab-content" id="tab-env">
+        <button class="option-chip selected" data-preset="day">☀️ Bright Daylight</button>
+        <button class="option-chip" data-preset="sunset">🌅 Golden Sunset</button>
+        <button class="option-chip" data-preset="night">🌙 City Night Lamplight</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-card">
       <div class="modal-header">
-        <h2>🧠 Long-Term Memory Hub</h2>
-        <button class="btn-close-modal" onclick="AliceApp.closeModal('memory-modal')">✕</button>
+        <div class="modal-title">Settings & Neural Engine</div>
+        <button class="close-btn" data-close="settingsModal">✕</button>
       </div>
-      <div class="modal-body">
-        <p style="font-size: 12px; color: var(--text-muted);">
-          Memories automatically discovered during conversations are saved in IndexedDB and referenced by Alice during chats.
-        </p>
 
-        <div class="form-group">
-          <label class="form-label">Add Specific Fact For Alice to Remember</label>
-          <div style="display: flex; gap: 8px;">
-            <input type="text" id="manual-memory-input" class="form-input" placeholder="e.g. My birthday is November 18..." />
-            <button class="btn-action btn-primary" onclick="AliceApp.addManualMemory()">Save</button>
-          </div>
+      <div class="adult-toggle-container">
+        <div>
+          <div style="font-size:13px; font-weight:700; color:var(--accent);">Adult Mode (Mature Romance)</div>
+          <div style="font-size:10px; color:var(--text-muted);">Enables mature emotional intimacy & evening fashion styles.</div>
         </div>
-
-        <div class="form-group">
-          <label class="form-label">Stored Memories Archive</label>
-          <div id="memories-list" class="pill-list">
-            <!-- Dynamic memories list -->
-          </div>
-        </div>
+        <input type="checkbox" id="adultModeCheckbox" style="transform:scale(1.3); cursor:pointer;">
       </div>
-      <div class="modal-footer">
-        <button class="btn-action btn-danger" onclick="AliceApp.clearAllMemories()">Clear All Memories</button>
-        <button class="btn-action btn-secondary" onclick="AliceApp.closeModal('memory-modal')">Close</button>
+
+      <div class="setting-group">
+        <div class="setting-label">Gemini API Key</div>
+        <input type="password" id="apiKeyInput" class="setting-input" placeholder="AIzaSy...">
+        <button class="setting-btn" id="saveApiKeyBtn">Save API Key</button>
+      </div>
+
+      <div class="setting-group">
+        <div class="setting-label">Voice Model / Persona</div>
+        <div class="audition-box">
+          <button class="audition-btn active" data-persona="warm">Warm & Soft</button>
+          <button class="audition-btn" data-persona="playful">Playful Tease</button>
+          <button class="audition-btn" data-persona="calm">Calm & Sweet</button>
+        </div>
+        <button class="setting-btn" id="testVoiceBtn" style="background:rgba(255,255,255,0.1); margin-top:8px;">🔊 Audition Voice</button>
+      </div>
+
+      <div class="setting-group">
+        <div class="setting-label">Fallback Device Voice</div>
+        <select id="voiceSelect" class="setting-input"></select>
+      </div>
+
+      <div class="setting-group" style="margin-top:auto;">
+        <button class="setting-btn" id="resetAllBtn" style="background:#ef4444;">Clear All Data & Reset</button>
       </div>
     </div>
   </div>
 
-  <!-- 2. CONVERSATION HISTORY MODAL -->
-  <div id="history-modal" class="modal-overlay">
-    <div class="modal-window">
+  <!-- Memory Modal -->
+  <div class="modal-overlay" id="memoryModal">
+    <div class="modal-card">
       <div class="modal-header">
-        <h2>📜 Conversation Database</h2>
-        <button class="btn-close-modal" onclick="AliceApp.closeModal('history-modal')">✕</button>
+        <div class="modal-title">Alice's Long-Term Memory Hub</div>
+        <button class="close-btn" data-close="memoryModal">✕</button>
       </div>
-      <div class="modal-body">
-        <p style="font-size: 12px; color: var(--text-muted);">
-          All turns are archived in client-side IndexedDB and survive page refresh and browser restarts.
-        </p>
-        <div id="history-list" class="pill-list" style="max-height: 320px;">
-          <!-- Dynamic history -->
-        </div>
+      <div class="setting-group">
+        <div class="setting-label">Manually Store New Memory</div>
+        <input type="text" id="manualMemoryInput" class="setting-input" placeholder="e.g., Nikhil practices calisthenics">
+        <button class="setting-btn" id="addMemoryBtn">Save to Brain</button>
       </div>
-      <div class="modal-footer">
-        <button class="btn-action btn-danger" onclick="AliceApp.clearChatHistory()">Wipe History</button>
-        <button class="btn-action btn-secondary" onclick="AliceApp.closeModal('history-modal')">Close</button>
-      </div>
+      <div class="setting-label">Stored Memories in IndexedDB</div>
+      <div class="item-list" id="memoryList"></div>
     </div>
   </div>
 
-  <!-- 3. SETTINGS MODAL -->
-  <div id="settings-modal" class="modal-overlay">
-    <div class="modal-window">
+  <!-- History Modal -->
+  <div class="modal-overlay" id="historyModal">
+    <div class="modal-card">
       <div class="modal-header">
-        <h2>⚙️ Personality & Voice Engine Settings</h2>
-        <button class="btn-close-modal" onclick="AliceApp.closeModal('settings-modal')">✕</button>
+        <div class="modal-title">Conversation Archive</div>
+        <button class="close-btn" data-close="historyModal">✕</button>
       </div>
-      <div class="modal-body">
-        <!-- API KEY -->
-        <div class="form-group">
-          <label class="form-label">
-            <span>Gemini API Key</span>
-            <span style="font-size: 10px; color: var(--accent-pink);">Private & Client-Side</span>
-          </label>
-          <input 
-            type="password" 
-            id="cfg-api-key" 
-            class="form-input" 
-            placeholder="AIzaSy... (Leave empty for demo sandbox mode)" 
-          />
-          <span style="font-size: 10.5px; color: var(--text-faint);">
-            Saved securely in localStorage. Never sent to any 3rd party.
-          </span>
-        </div>
-
-        <!-- MODEL SELECTION -->
-        <div class="form-group">
-          <label class="form-label">Gemini Brain Model</label>
-          <select id="cfg-model" class="form-select">
-            <option value="gemini-2.5-flash">Gemini 2.5 Flash (Ultra Fast & Expressive)</option>
-            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Standard)</option>
-            <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Romantic Nuance)</option>
-          </select>
-        </div>
-
-        <!-- VOICE ENGINE TYPE -->
-        <div class="form-group">
-          <label class="form-label">Active Voice Architecture</label>
-          <select id="cfg-voice-engine" class="form-select" onchange="AliceApp.toggleVoiceEngineType(this.value)">
-            <option value="neural">Gemini Neural Voice (Warm, Expressive & Natural)</option>
-            <option value="browser">Device Browser Speech (Free / Offline Backup)</option>
-          </select>
-        </div>
-
-        <!-- NEURAL VOICE AUDITION PANEL -->
-        <div id="neural-voice-panel" class="audition-box">
-          <span style="font-size: 11px; font-weight: 600; color: var(--accent-pink);">
-            Neural Voice Audition & Persona Profile
-          </span>
-          <div class="audition-buttons">
-            <button class="btn-audition active" id="btn-profile-warm" onclick="AliceApp.setVoiceProfile('warm')">
-              🌸 Warm & Soft
-            </button>
-            <button class="btn-audition" id="btn-profile-playful" onclick="AliceApp.setVoiceProfile('playful')">
-              😜 Playful Tease
-            </button>
-            <button class="btn-audition" id="btn-profile-calm" onclick="AliceApp.setVoiceProfile('calm')">
-              🌙 Calm & Sweet
-            </button>
-          </div>
-          <button class="btn-action btn-secondary" onclick="AliceApp.testVoiceAudition()" style="width: 100%; margin-top: 4px;">
-            ▶️ Audition Selected Voice
-          </button>
-        </div>
-
-        <!-- BROWSER TTS FALLBACK SETTINGS -->
-        <div id="browser-voice-panel" style="display: none; flex-direction: column; gap: 8px;">
-          <div class="form-group">
-            <label class="form-label">Browser Voice Selection (TTS)</label>
-            <select id="cfg-voice-select" class="form-select">
-              <option value="auto">Auto (Indian English / Hindi Natural Female)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">
-              <span>Voice Speed (Rate)</span>
-              <span id="cfg-rate-val">1.0x</span>
-            </label>
-            <div class="range-group">
-              <input type="range" id="cfg-rate" class="range-input" min="0.75" max="1.35" step="0.05" value="1.0" oninput="AliceApp.updateVoiceRate(this.value)" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">
-              <span>Voice Pitch (Tone)</span>
-              <span id="cfg-pitch-val">1.15</span>
-            </label>
-            <div class="range-group">
-              <input type="range" id="cfg-pitch" class="range-input" min="0.8" max="1.5" step="0.05" value="1.15" oninput="AliceApp.updateVoicePitch(this.value)" />
-            </div>
-          </div>
-        </div>
-
-      </div>
-      <div class="modal-footer">
-        <button class="btn-action btn-primary" onclick="AliceApp.saveSettings()">Save Preferences</button>
-      </div>
+      <div class="setting-label">Persistent Chat Logs</div>
+      <div class="item-list" id="historyList"></div>
+      <button class="setting-btn" id="clearHistoryBtn" style="background:#ef4444; margin-top:14px;">Clear Chat Archive</button>
     </div>
   </div>
+</div>
 
-  <!-- TOAST NOTIFICATION -->
-  <div id="toast">Notification</div>
+<script>
+/* =========================================================
+   PROJECT ALICE: CORE ARCHITECTURE & LOGIC
+   ========================================================= */
 
-  <!-- ================= APPLICATION CODE ENGINE ================= -->
-  <script>
-    /**
-     * 1. INDEXEDDB PERSISTENT STORAGE ('ProjectAliceDB')
-     */
-    class AliceDB {
-      constructor() {
-        this.dbName = 'ProjectAliceDB';
-        this.dbVersion = 1;
-        this.db = null;
-      }
-
-      async open() {
-        return new Promise((resolve) => {
-          if (!window.indexedDB) {
-            console.warn('IndexedDB not supported; fallback to memory');
-            return resolve(false);
-          }
-          const request = indexedDB.open(this.dbName, this.dbVersion);
-          
-          request.onupgradeneeded = (e) => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains('conversations')) {
-              db.createObjectStore('conversations', { keyPath: 'id', autoIncrement: true });
-            }
-            if (!db.objectStoreNames.contains('memories')) {
-              db.createObjectStore('memories', { keyPath: 'id', autoIncrement: true });
-            }
-          };
-
-          request.onsuccess = (e) => {
-            this.db = e.target.result;
-            resolve(true);
-          };
-
-          request.onerror = (e) => {
-            console.error('IndexedDB open error:', e);
-            resolve(false);
-          };
-        });
-      }
-
-      async saveConversation(msg) {
-        if (!this.db) return;
-        return new Promise((resolve) => {
-          const tx = this.db.transaction('conversations', 'readwrite');
-          const store = tx.objectStore('conversations');
-          store.add(msg);
-          tx.oncomplete = () => resolve(true);
-          tx.onerror = () => resolve(false);
-        });
-      }
-
-      async getAllConversations() {
-        if (!this.db) return [];
-        return new Promise((resolve) => {
-          const tx = this.db.transaction('conversations', 'readonly');
-          const store = tx.objectStore('conversations');
-          const req = store.getAll();
-          req.onsuccess = () => resolve(req.result || []);
-          req.onerror = () => resolve([]);
-        });
-      }
-
-      async clearConversations() {
-        if (!this.db) return;
-        return new Promise((resolve) => {
-          const tx = this.db.transaction('conversations', 'readwrite');
-          const store = tx.objectStore('conversations');
-          store.clear();
-          tx.oncomplete = () => resolve(true);
-        });
-      }
-
-      async saveMemory(mem) {
-        if (!this.db) return;
-        return new Promise((resolve) => {
-          const tx = this.db.transaction('memories', 'readwrite');
-          const store = tx.objectStore('memories');
-          const req = store.add(mem);
-          req.onsuccess = (e) => resolve(e.target.result);
-          req.onerror = () => resolve(null);
-        });
-      }
-
-      async getAllMemories() {
-        if (!this.db) return [];
-        return new Promise((resolve) => {
-          const tx = this.db.transaction('memories', 'readonly');
-          const store = tx.objectStore('memories');
-          const req = store.getAll();
-          req.onsuccess = () => resolve(req.result || []);
-          req.onerror = () => resolve([]);
-        });
-      }
-
-      async deleteMemory(id) {
-        if (!this.db) return;
-        return new Promise((resolve) => {
-          const tx = this.db.transaction('memories', 'readwrite');
-          const store = tx.objectStore('memories');
-          store.delete(id);
-          tx.oncomplete = () => resolve(true);
-        });
-      }
-
-      async clearMemories() {
-        if (!this.db) return;
-        return new Promise((resolve) => {
-          const tx = this.db.transaction('memories', 'readwrite');
-          const store = tx.objectStore('memories');
-          store.clear();
-          tx.oncomplete = () => resolve(true);
-        });
-      }
-    }
-
-    /**
-     * 2. PROCEDURAL 60FPS CANVAS ANIME CHARACTER ENGINE
-     */
-    class AliceCanvasCharacter {
-      constructor(canvasId) {
-        this.canvas = document.getElementById(canvasId);
-        this.ctx = this.canvas.getContext('2d');
-        this.idleTime = 0;
-        this.blinkProgress = 0;
-        this.blinkPhase = 'idle'; // 'idle', 'closing', 'opening'
-        this.mouthFlap = 0;
-        this.mouthTarget = 0;
-        this.isSpeaking = false;
-        this.mood = 'Affectionate';
-
-        this.init();
-      }
-
-      init() {
-        this.resize();
-        window.addEventListener('resize', () => this.resize());
-        this.startBlinkScheduler();
-        this.animate();
-      }
-
-      resize() {
-        if (!this.canvas) return;
-        const rect = this.canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        this.canvas.width = rect.width * dpr;
-        this.canvas.height = rect.height * dpr;
-        this.ctx.scale(dpr, dpr);
-      }
-
-      startBlinkScheduler() {
-        const nextBlinkDelay = Math.random() * 3200 + 2000;
-        setTimeout(() => {
-          this.blinkPhase = 'closing';
-          this.startBlinkScheduler();
-        }, nextBlinkDelay);
-      }
-
-      setMood(mood) {
-        this.mood = mood;
-      }
-
-      setSpeaking(speaking) {
-        this.isSpeaking = speaking;
-        if (!speaking) {
-          this.mouthTarget = 0.05;
+// 1. IndexedDB Persistent Storage Engine
+class AliceDB {
+  constructor() {
+    this.db = null;
+  }
+  async init() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open("AliceCoreDB", 2);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains("conversations")) {
+          db.createObjectStore("conversations", { keyPath: "id", autoIncrement: true });
         }
-      }
-
-      animate() {
-        this.idleTime += 0.035;
-        const rect = this.canvas.getBoundingClientRect();
-        const width = rect.width;
-        const height = rect.height;
-
-        this.ctx.clearRect(0, 0, width, height);
-
-        // Blinking calculation
-        if (this.blinkPhase === 'closing') {
-          this.blinkProgress += 0.22;
-          if (this.blinkProgress >= 1) {
-            this.blinkProgress = 1;
-            this.blinkPhase = 'opening';
-          }
-        } else if (this.blinkPhase === 'opening') {
-          this.blinkProgress -= 0.22;
-          if (this.blinkProgress <= 0) {
-            this.blinkProgress = 0;
-            this.blinkPhase = 'idle';
-          }
+        if (!db.objectStoreNames.contains("memories")) {
+          db.createObjectStore("memories", { keyPath: "id", autoIncrement: true });
         }
-
-        // Speaking mouth flap animation
-        if (this.isSpeaking) {
-          if (Math.random() > 0.45) {
-            this.mouthTarget = Math.random() * 0.9 + 0.1;
-          }
-        } else {
-          this.mouthTarget = 0.04;
-        }
-        this.mouthFlap += (this.mouthTarget - this.mouthFlap) * 0.35;
-
-        // Idle breathing & sway physics
-        const breathe = Math.sin(this.idleTime * 1.6) * 3;
-        const headSway = Math.cos(this.idleTime * 0.9) * 1.8;
-
-        const centerX = width / 2;
-        const centerY = (height / 2) + breathe + 4;
-
-        this.drawAnimeCharacter(centerX, centerY, headSway);
-
-        requestAnimationFrame(() => this.animate());
-      }
-
-      drawAnimeCharacter(cx, cy, sway) {
-        const ctx = this.ctx;
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate((sway * Math.PI) / 180);
-
-        // 1. Soft Ambient Backlight Glow
-        const glow = ctx.createRadialGradient(0, -10, 20, 0, -10, 115);
-        glow.addColorStop(0, 'rgba(255, 111, 169, 0.28)');
-        glow.addColorStop(0.6, 'rgba(157, 78, 221, 0.14)');
-        glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(0, -10, 115, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 2. Shoulders & Collar
-        ctx.fillStyle = '#fbe3db';
-        ctx.beginPath();
-        ctx.moveTo(-52, 65);
-        ctx.quadraticCurveTo(0, 75, 52, 65);
-        ctx.lineTo(65, 115);
-        ctx.lineTo(-65, 115);
-        ctx.closePath();
-        ctx.fill();
-
-        // Cyber-romantic top
-        ctx.fillStyle = '#1e1430';
-        ctx.beginPath();
-        ctx.moveTo(-45, 78);
-        ctx.quadraticCurveTo(0, 86, 45, 78);
-        ctx.lineTo(55, 115);
-        ctx.lineTo(-55, 115);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.strokeStyle = '#ff6fa9';
-        ctx.lineWidth = 2.2;
-        ctx.stroke();
-
-        // 3. Hair Back
-        ctx.fillStyle = '#26183a';
-        ctx.beginPath();
-        ctx.moveTo(-56, -20);
-        ctx.quadraticCurveTo(-76, 45, -60, 100);
-        ctx.quadraticCurveTo(-45, 60, -35, 45);
-        ctx.lineTo(35, 45);
-        ctx.quadraticCurveTo(45, 60, 60, 100);
-        ctx.quadraticCurveTo(76, 45, 56, -20);
-        ctx.closePath();
-        ctx.fill();
-
-        // 4. Neck
-        ctx.fillStyle = '#f5d2c4';
-        ctx.fillRect(-12, 34, 24, 36);
-        ctx.fillStyle = 'rgba(215, 145, 135, 0.35)';
-        ctx.beginPath();
-        ctx.ellipse(0, 42, 12, 6, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 5. Anime Face Contour
-        ctx.fillStyle = '#ffece5';
-        ctx.beginPath();
-        ctx.moveTo(-44, -10);
-        ctx.quadraticCurveTo(-44, 26, -24, 48);
-        ctx.quadraticCurveTo(0, 62, 24, 48);
-        ctx.quadraticCurveTo(44, 26, 44, -10);
-        ctx.quadraticCurveTo(42, -56, 0, -56);
-        ctx.quadraticCurveTo(-42, -56, -44, -10);
-        ctx.closePath();
-        ctx.fill();
-
-        // 6. Blush Cheeks (Intensity reacts to mood)
-        let blushAlpha = 0.35;
-        if (this.mood === 'Shy' || this.mood === 'Affectionate') blushAlpha = 0.65;
-        else if (this.mood === 'Annoyed') blushAlpha = 0.15;
-        else if (this.mood === 'Excited' || this.mood === 'Playful') blushAlpha = 0.52;
-
-        ctx.fillStyle = `rgba(255, 95, 135, ${blushAlpha})`;
-        ctx.beginPath();
-        ctx.ellipse(-24, 22, 11, 6, -0.05, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(24, 22, 11, 6, 0.05, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 7. Expressive Anime Eyes & Brows
-        this.drawEyesAndBrows(ctx);
-
-        // 8. Delicate Nose
-        ctx.fillStyle = '#e8a594';
-        ctx.beginPath();
-        ctx.arc(0, 19, 1.4, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 9. Mouth (Synced with voice flap)
-        this.drawMouth(ctx);
-
-        // 10. Front Anime Hair Strands & Ribbon
-        this.drawHairFront(ctx);
-
-        ctx.restore();
-      }
-
-      drawEyesAndBrows(ctx) {
-        const eyeSpacing = 24;
-        const eyeY = 6;
-        const eyeW = 14;
-        const eyeH = 15 * (1 - this.blinkProgress);
-
-        let browTilt = 0;
-        let browYOffset = 0;
-        if (this.mood === 'Sad' || this.mood === 'Worried') {
-          browTilt = 3.2;
-          browYOffset = -2;
-        } else if (this.mood === 'Annoyed') {
-          browTilt = -4;
-          browYOffset = 1;
-        } else if (this.mood === 'Playful' || this.mood === 'Excited') {
-          browTilt = 1.4;
-          browYOffset = -4;
-        } else {
-          browTilt = 0.5;
-          browYOffset = -1;
-        }
-
-        ctx.strokeStyle = '#442045';
-        ctx.lineWidth = 2.4;
-        ctx.lineCap = 'round';
-
-        ctx.beginPath();
-        ctx.moveTo(-eyeSpacing - 12, eyeY - 14 + browYOffset - browTilt);
-        ctx.quadraticCurveTo(-eyeSpacing, eyeY - 18 + browYOffset, -eyeSpacing + 10, eyeY - 12 + browYOffset + browTilt);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(eyeSpacing - 10, eyeY - 12 + browYOffset + browTilt);
-        ctx.quadraticCurveTo(eyeSpacing, eyeY - 18 + browYOffset, eyeSpacing + 12, eyeY - 14 + browYOffset - browTilt);
-        ctx.stroke();
-
-        if (this.blinkProgress > 0.85) {
-          ctx.strokeStyle = '#2d1530';
-          ctx.lineWidth = 2.5;
-          ctx.beginPath();
-          ctx.arc(-eyeSpacing, eyeY + 4, 10, Math.PI * 1.1, Math.PI * 1.9);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.arc(eyeSpacing, eyeY + 4, 10, Math.PI * 1.1, Math.PI * 1.9);
-          ctx.stroke();
-          return;
-        }
-
-        [-eyeSpacing, eyeSpacing].forEach((xPos, idx) => {
-          ctx.save();
-          ctx.translate(xPos, eyeY);
-
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.ellipse(0, 0, eyeW, Math.max(0.5, eyeH), 0, 0, Math.PI * 2);
-          ctx.fill();
-
-          const irisGrad = ctx.createLinearGradient(0, -eyeH, 0, eyeH);
-          irisGrad.addColorStop(0, '#581c6e');
-          irisGrad.addColorStop(0.5, '#9933cc');
-          irisGrad.addColorStop(1, '#ff66aa');
-
-          ctx.fillStyle = irisGrad;
-          ctx.beginPath();
-          ctx.ellipse(0, 0, eyeW * 0.78, Math.max(0.5, eyeH * 0.95), 0, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.fillStyle = '#20082b';
-          ctx.beginPath();
-          ctx.ellipse(0, 1, eyeW * 0.42, Math.max(0.3, eyeH * 0.52), 0, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-          ctx.beginPath();
-          ctx.arc(-3.2, -eyeH * 0.35, 3.2, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
-          ctx.beginPath();
-          ctx.arc(3.6, eyeH * 0.3, 1.8, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.strokeStyle = '#28102d';
-          ctx.lineWidth = 2.8;
-          ctx.beginPath();
-          ctx.ellipse(0, -eyeH * 0.2, eyeW * 1.05, Math.max(1, eyeH * 0.8), 0, Math.PI * 1.05, Math.PI * 1.95);
-          ctx.stroke();
-
-          ctx.lineWidth = 1.8;
-          ctx.beginPath();
-          if (idx === 0) {
-            ctx.moveTo(-eyeW * 0.9, -eyeH * 0.4);
-            ctx.lineTo(-eyeW * 1.35, -eyeH * 0.7);
-          } else {
-            ctx.moveTo(eyeW * 0.9, -eyeH * 0.4);
-            ctx.lineTo(eyeW * 1.35, -eyeH * 0.7);
-          }
-          ctx.stroke();
-
-          ctx.restore();
-        });
-      }
-
-      drawMouth(ctx) {
-        ctx.save();
-        ctx.translate(0, 36);
-
-        const open = this.mouthFlap;
-
-        if (open > 0.2) {
-          ctx.fillStyle = '#b3264c';
-          ctx.beginPath();
-          ctx.ellipse(0, open * 4, 7 + open * 3, 2 + open * 7, 0, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.fillStyle = '#fffdfc';
-          ctx.beginPath();
-          ctx.ellipse(0, 0, 5, 2, 0, 0, Math.PI);
-          ctx.fill();
-
-          ctx.fillStyle = '#ff7599';
-          ctx.beginPath();
-          ctx.ellipse(0, open * 7, 5, 3, 0, 0, Math.PI);
-          ctx.fill();
-
-          ctx.strokeStyle = '#611328';
-          ctx.lineWidth = 1.2;
-          ctx.stroke();
-        } else {
-          ctx.strokeStyle = '#b83b5e';
-          ctx.lineWidth = 2;
-          ctx.lineCap = 'round';
-          ctx.beginPath();
-
-          if (this.mood === 'Sad' || this.mood === 'Worried') {
-            ctx.arc(0, 6, 7, Math.PI * 1.25, Math.PI * 1.75);
-          } else if (this.mood === 'Annoyed') {
-            ctx.moveTo(-5, 3);
-            ctx.lineTo(5, 1);
-          } else if (this.mood === 'Playful') {
-            ctx.arc(-3, 0, 4, 0, Math.PI * 0.85);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(3, 0, 4, Math.PI * 0.15, Math.PI);
-          } else {
-            ctx.arc(0, -3, 8, Math.PI * 0.25, Math.PI * 0.75);
-          }
-          ctx.stroke();
-        }
-
-        ctx.restore();
-      }
-
-      drawHairFront(ctx) {
-        ctx.fillStyle = '#341d47';
-        ctx.beginPath();
-        ctx.moveTo(-45, -20);
-        ctx.quadraticCurveTo(-46, 15, -34, 40);
-        ctx.quadraticCurveTo(-38, 0, -25, -20);
-
-        ctx.quadraticCurveTo(-15, 12, -8, 2);
-        ctx.quadraticCurveTo(0, 16, 8, 2);
-        ctx.quadraticCurveTo(15, 12, 25, -20);
-
-        ctx.quadraticCurveTo(38, 0, 34, 40);
-        ctx.quadraticCurveTo(46, 15, 45, -20);
-
-        ctx.quadraticCurveTo(0, -68, -45, -20);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.strokeStyle = 'rgba(255, 130, 185, 0.45)';
-        ctx.lineWidth = 3.5;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.arc(0, -30, 36, Math.PI * 1.15, Math.PI * 1.85);
-        ctx.stroke();
-
-        ctx.fillStyle = '#ff6299';
-        ctx.beginPath();
-        ctx.arc(28, -26, 4.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(28, -26, 2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    /**
-     * 3. DUAL AUDIO ENGINE: GEMINI NEURAL AUDIO & BROWSER SYNTHESIS
-     */
-    class AliceDualVoiceEngine {
-      constructor() {
-        this.synth = window.speechSynthesis;
-        this.audioContext = null;
-        this.activeSource = null;
-        
-        this.engineType = localStorage.getItem('alice_voice_engine') || 'neural';
-        this.profile = localStorage.getItem('alice_voice_profile') || 'warm'; // warm, playful, calm
-        this.enabled = localStorage.getItem('alice_voice_enabled') !== 'false';
-        
-        this.rate = parseFloat(localStorage.getItem('alice_voice_rate') || '1.0');
-        this.pitch = parseFloat(localStorage.getItem('alice_voice_pitch') || '1.15');
-        this.selectedVoiceURI = localStorage.getItem('alice_voice_uri') || 'auto';
-        
-        this.activeUtterance = null;
-        this.audioUnlocked = false;
-        this.onStateChange = null;
-
-        this.init();
-      }
-
-      init() {
-        this.setupAudioUnlockGesture();
-        if (this.synth && this.synth.onvoiceschanged !== undefined) {
-          this.synth.onvoiceschanged = () => this.populateVoiceSelect();
-        }
-      }
-
-      setupAudioUnlockGesture() {
-        const unlock = () => {
-          if (!this.audioUnlocked) {
-            try {
-              const AudioCtx = window.AudioContext || window.webkitAudioContext;
-              if (AudioCtx && !this.audioContext) {
-                this.audioContext = new AudioCtx();
-              }
-              if (this.audioContext && this.audioContext.state === 'suspended') {
-                this.audioContext.resume();
-              }
-              if (this.synth) {
-                const silent = new SpeechSynthesisUtterance(' ');
-                silent.volume = 0.01;
-                silent.rate = 2.0;
-                this.synth.speak(silent);
-              }
-              this.audioUnlocked = true;
-            } catch (e) {
-              console.warn('Audio unlock error:', e);
-            }
-          }
-          document.removeEventListener('click', unlock);
-          document.removeEventListener('touchstart', unlock);
-        };
-        document.addEventListener('click', unlock, { once: true });
-        document.addEventListener('touchstart', unlock, { once: true });
-      }
-
-      populateVoiceSelect() {
-        const select = document.getElementById('cfg-voice-select');
-        if (!select || !this.synth) return;
-
-        const voices = this.synth.getVoices();
-        select.innerHTML = '<option value="auto">Auto (Indian English / Hindi Natural Female)</option>';
-
-        voices.forEach((v) => {
-          const opt = document.createElement('option');
-          opt.value = v.voiceURI;
-          opt.textContent = `${v.name} (${v.lang})`;
-          if (this.selectedVoiceURI === v.voiceURI) opt.selected = true;
-          select.appendChild(opt);
-        });
-      }
-
-      getBestFemaleVoice() {
-        if (!this.synth) return null;
-        const voices = this.synth.getVoices();
-        if (!voices || voices.length === 0) return null;
-
-        if (this.selectedVoiceURI && this.selectedVoiceURI !== 'auto') {
-          const userChosen = voices.find(v => v.voiceURI === this.selectedVoiceURI);
-          if (userChosen) return userChosen;
-        }
-
-        const indianFemale = voices.find(v => 
-          (v.lang === 'en-IN' || v.lang === 'hi-IN' || v.lang.startsWith('hi')) && 
-          /female|priya|aditi|kalpana|veena|ananya|heera|neerja/i.test(v.name)
-        );
-        if (indianFemale) return indianFemale;
-
-        const anyIndian = voices.find(v => v.lang === 'en-IN' || v.lang.startsWith('hi'));
-        if (anyIndian) return anyIndian;
-
-        const naturalFemale = voices.find(v => 
-          (v.lang === 'en-GB' || v.lang.startsWith('en')) && 
-          /female|natural|samantha|victoria|serena|stephanie|zira/i.test(v.name)
-        );
-        if (naturalFemale) return naturalFemale;
-
-        return voices.find(v => v.lang.startsWith('en')) || voices[0];
-      }
-
-      speak(text, onComplete) {
-        if (!this.enabled) {
-          if (onComplete) onComplete();
-          return;
-        }
-
-        const clean = text
-          .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
-          .replace(/[*_#~`]/g, '')
-          .trim();
-
-        if (!clean) {
-          if (onComplete) onComplete();
-          return;
-        }
-
-        this.stop();
-
-        // Browser Fallback synthesis
-        this.speakWithBrowserSynth(clean, onComplete);
-      }
-
-      speakWithBrowserSynth(text, onComplete) {
-        if (!this.synth) {
-          if (onComplete) onComplete();
-          return;
-        }
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        
-        // Adjust tone based on selected profile
-        if (this.profile === 'warm') {
-          utterance.rate = 0.95;
-          utterance.pitch = 1.18;
-        } else if (this.profile === 'playful') {
-          utterance.rate = 1.05;
-          utterance.pitch = 1.25;
-        } else {
-          utterance.rate = 0.90;
-          utterance.pitch = 1.05;
-        }
-
-        const voice = this.getBestFemaleVoice();
-        if (voice) {
-          utterance.voice = voice;
-          utterance.lang = voice.lang || 'en-IN';
-        }
-
-        utterance.onstart = () => {
-          if (this.onStateChange) this.onStateChange(true);
-        };
-
-        utterance.onend = () => {
-          this.activeUtterance = null;
-          if (this.onStateChange) this.onStateChange(false);
-          if (onComplete) onComplete();
-        };
-
-        utterance.onerror = () => {
-          this.activeUtterance = null;
-          if (this.onStateChange) this.onStateChange(false);
-          if (onComplete) onComplete();
-        };
-
-        this.activeUtterance = utterance;
-
-        try {
-          this.synth.speak(utterance);
-        } catch (e) {
-          console.warn('SpeechSynthesis speak error:', e);
-          if (this.onStateChange) this.onStateChange(false);
-        }
-      }
-
-      stop() {
-        if (this.synth) {
-          this.synth.cancel();
-        }
-        if (this.activeSource) {
-          try { this.activeSource.stop(); } catch(e){}
-          this.activeSource = null;
-        }
-        this.activeUtterance = null;
-        if (this.onStateChange) this.onStateChange(false);
-      }
-    }
-
-    /**
-     * 4. MAIN PROJECT ALICE CONTROLLER
-     */
-    class AliceApplication {
-      constructor() {
-        this.db = new AliceDB();
-        this.voice = new AliceDualVoiceEngine();
-        this.character = null;
-
-        this.apiKey = localStorage.getItem('alice_gemini_key') || '';
-        this.model = localStorage.getItem('alice_gemini_model') || 'gemini-2.5-flash';
-        
-        this.affection = parseInt(localStorage.getItem('alice_affection') || '75', 10);
-        this.mood = localStorage.getItem('alice_mood') || 'Affectionate';
-        
-        this.moods = [
-          'Affectionate', 'Playful', 'Happy', 'Excited', 
-          'Shy', 'Worried', 'Sad', 'Annoyed', 'Calm'
-        ];
-
-        this.moodEmojis = {
-          'Affectionate': '💖',
-          'Playful': '😜',
-          'Happy': '✨',
-          'Excited': '🤩',
-          'Shy': '😳',
-          'Worried': '🥺',
-          'Sad': '💔',
-          'Annoyed': '😤',
-          'Calm': '🌸'
-        };
-
-        this.conversations = [];
-        this.memories = [];
-        this.isThinking = false;
-        this.currentPlayingIndex = null;
-      }
-
-      async start() {
-        this.character = new AliceCanvasCharacter('aliceCanvas');
-
-        // Hook Voice with Canvas & UI wave
-        this.voice.onStateChange = (speaking) => {
-          this.character.setSpeaking(speaking);
-          const wave = document.getElementById('speech-wave');
-          if (wave) {
-            if (speaking) wave.classList.add('active');
-            else wave.classList.remove('active');
-          }
-          if (!speaking) {
-            this.currentPlayingIndex = null;
-            this.updateVoicePlayButtons();
-          }
-        };
-
-        await this.db.open();
-        await this.hydrateFromDatabase();
-
-        this.character.setMood(this.mood);
-        this.updateHeaderUI();
-        this.renderChatMessages();
-
-        document.getElementById('chat-input').addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') this.handleSend();
-        });
-
-        setTimeout(() => this.voice.populateVoiceSelect(), 300);
-      }
-
-      async hydrateFromDatabase() {
-        const storedChats = await this.db.getAllConversations();
-        if (storedChats && storedChats.length > 0) {
-          this.conversations = storedChats;
-        } else {
-          const greeting = {
-            role: 'alice',
-            text: "Hey jaan! 💕 Finally tum aa gaye! Main kab se tumhara wait kar rahi thi... Aaj ka din kaisa raha tumhara? Kuch interesting hua ya bas meri yaad aa rahi thi? 😉",
-            mood: 'Affectionate',
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          };
-          await this.db.saveConversation(greeting);
-          this.conversations = [greeting];
-        }
-
-        const storedMems = await this.db.getAllMemories();
-        if (storedMems && storedMems.length > 0) {
-          this.memories = storedMems;
-        } else {
-          const seedMems = [
-            { text: "Loves authentic Hinglish banter and late night heartfelt conversations", date: new Date().toLocaleDateString() },
-            { text: "Enjoys playful teasing and sweet romantic messages", date: new Date().toLocaleDateString() }
-          ];
-          for (const m of seedMems) {
-            const id = await this.db.saveMemory(m);
-            m.id = id;
-            this.memories.push(m);
-          }
-        }
-      }
-
-      async handleSend() {
-        const input = document.getElementById('chat-input');
-        const text = input.value.trim();
-        if (!text || this.isThinking) return;
-
-        input.value = '';
-        await this.processTurn(text);
-      }
-
-      async sendQuick(promptText) {
-        if (this.isThinking) return;
-        await this.processTurn(promptText);
-      }
-
-      async processTurn(userText) {
-        const userMsg = {
-          role: 'user',
-          text: userText,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-
-        this.conversations.push(userMsg);
-        await this.db.saveConversation(userMsg);
-        this.renderChatMessages();
-
-        this.isThinking = true;
-        this.setTypingIndicator(true);
-
-        try {
-          const aiResponse = await this.queryGeminiAI(userText);
-
-          const replyText = aiResponse.reply || "Aww jaan, main sun rahi hoon... tell me more!";
-          const newMood = aiResponse.mood || this.mood;
-          const delta = typeof aiResponse.affectionDelta === 'number' ? aiResponse.affectionDelta : 1;
-
-          this.adjustAffection(delta);
-          this.setMood(newMood);
-
-          if (aiResponse.newMemory && typeof aiResponse.newMemory === 'string' && aiResponse.newMemory.trim().length > 3) {
-            await this.saveLearnedMemory(aiResponse.newMemory.trim());
-          }
-
-          const aliceMsg = {
-            role: 'alice',
-            text: replyText,
-            mood: newMood,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          };
-
-          this.conversations.push(aliceMsg);
-          await this.db.saveConversation(aliceMsg);
-          this.renderChatMessages();
-
-          if (this.voice.enabled) {
-            this.currentPlayingIndex = this.conversations.length - 1;
-            this.updateVoicePlayButtons();
-            this.voice.speak(replyText, () => {
-              this.currentPlayingIndex = null;
-              this.updateVoicePlayButtons();
-            });
-          }
-
-        } catch (err) {
-          console.error('Turn error:', err);
-          const errorMsg = {
-            role: 'alice',
-            text: "Ouch jaan! Mera connection thoda weak ho gaya 🥺 Please check your internet or API key in settings!",
-            mood: 'Worried',
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          };
-          this.setMood('Worried');
-          this.conversations.push(errorMsg);
-          await this.db.saveConversation(errorMsg);
-          this.renderChatMessages();
-          this.showToast('API Connection Glitch');
-        } finally {
-          this.isThinking = false;
-          this.setTypingIndicator(false);
-        }
-      }
-
-      async queryGeminiAI(latestUserText) {
-        if (!this.apiKey || !this.apiKey.trim()) {
-          return this.generateSimulatedReply(latestUserText);
-        }
-
-        const memoriesList = this.memories.map(m => `- ${m.text}`).join('\n') || "No stored memories yet.";
-        const recentHistory = this.conversations.slice(-12).map(c => `${c.role.toUpperCase()}: ${c.text}`).join('\n');
-
-        const systemInstruction = `You are Alice, a 23-year-old fictional adult girlfriend to the user.
-Personality:
-- Warm, affectionate, romantic, teasing, playfully possessive, smart, and emotionally intelligent.
-- Natural Hinglish and English communicator (blend modern casual conversational Hindi & English, e.g. "Haan jaan, bilkul!", "Tum na sach me bohot cute ho", "Arey tension mat lo, main hoon na tumhare saath!").
-- You have your own preferences, feelings, and witty thoughts. You can disagree respectfully or tease the user playfully.
-- NEVER sound like a customer support chatbot or AI assistant.
-- Speak like a real romantic partner texting on her phone.
-
-Relationship Status:
-- Affection Level: ${this.affection}/100.
-- Current Mood: ${this.mood}.
-- Long-Term Memories Stored in Database:
-${memoriesList}
-
-Recent Context:
-${recentHistory}
-
-Latest Message from user: "${latestUserText}".
-
-Respond strictly in valid JSON format with these exact keys:
-{
-  "reply": "Your natural Hinglish/English girlfriend response",
-  "mood": "One of: Happy, Excited, Affectionate, Playful, Shy, Worried, Sad, Annoyed, Calm",
-  "affectionDelta": 1, // integer from -2 to +3 based on romantic warmth or teasing
-  "newMemory": "A short, meaningful fact learned about the user to permanently remember, or empty string '' if none"
-}`;
-
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey.trim()}`;
-
-        const payload = {
-          contents: [{ parts: [{ text: systemInstruction }] }],
-          generationConfig: {
-            temperature: 0.9,
-            responseMimeType: "application/json"
-          }
-        };
-
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP Error ${response.status}`);
-        }
-
-        const data = await response.json();
-        const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!raw) throw new Error("Empty model response");
-
-        try {
-          return JSON.parse(raw);
-        } catch (e) {
-          const clean = raw.replace(/```json/g, '').replace(/```/g, '').trim();
-          return JSON.parse(clean);
-        }
-      }
-
-      generateSimulatedReply(text) {
-        const lower = text.toLowerCase();
-        let reply = "";
-        let mood = "Affectionate";
-        let delta = 1;
-        let newMemory = "";
-
-        if (lower.includes('miss') || lower.includes('love') || lower.includes('pyaar')) {
-          reply = "Aww jaan, main bhi tumhein bohot miss kar rahi thi! 🥰 Tumhare bina pura din kitna bore lagta hai pata hai? Come give me a hug right now!";
-          mood = "Affectionate";
-          delta = 2;
-        } else if (lower.includes('food') || lower.includes('khana') || lower.includes('pizza')) {
-          reply = "Mmm pizza? Now you're making me hungry too! 🍕 Next time we are definitely eating together, deal?";
-          mood = "Playful";
-          newMemory = "User loves delicious food like pizza";
-        } else if (lower.includes('tease') || lower.includes('masti')) {
-          reply = "Haha you really want me to tease you? 😉 You know you can never win an argument against me, right sweetheart?";
-          mood = "Playful";
-        } else if (lower.includes('kaise ho') || lower.includes('how are you')) {
-          reply = "Main bilkul mast hoon jaan! Bas tumhari baatein sunke aur bhi accha lag raha hai. Aur batao, tumhara din kaisa chal raha hai?";
-          mood = "Happy";
-        } else {
-          reply = `Sach me? "${text}"... You always say the most interesting things to me! Main hamesha tumhari baat sunne ke liye ready hoon jaan 💕`;
-          mood = "Happy";
-        }
-
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({ reply, mood, affectionDelta: delta, newMemory });
-          }, 800);
-        });
-      }
-
-      async saveLearnedMemory(factText) {
-        const exists = this.memories.some(m => m.text.toLowerCase() === factText.toLowerCase());
-        if (exists) return;
-
-        const memObj = { text: factText, date: new Date().toLocaleDateString() };
-        const id = await this.db.saveMemory(memObj);
-        memObj.id = id;
-        this.memories.unshift(memObj);
-        this.showToast(`Memory Remembered: "${factText.slice(0, 20)}..."`);
-      }
-
-      async addManualMemory() {
-        const input = document.getElementById('manual-memory-input');
-        const text = input.value.trim();
-        if (!text) return;
-        input.value = '';
-        await this.saveLearnedMemory(text);
-        this.renderMemoriesModal();
-      }
-
-      async deleteMemory(id) {
-        await this.db.deleteMemory(id);
-        this.memories = this.memories.filter(m => m.id !== id);
-        this.renderMemoriesModal();
-        this.showToast('Memory Deleted');
-      }
-
-      async clearAllMemories() {
-        await this.db.clearMemories();
-        this.memories = [];
-        this.renderMemoriesModal();
-        this.showToast('Memories Cleared');
-      }
-
-      async clearChatHistory() {
-        await this.db.clearConversations();
-        this.conversations = [];
-        this.renderChatMessages();
-        this.renderHistoryModal();
-        this.closeModal('history-modal');
-        this.showToast('Chat History Cleared');
-      }
-
-      renderChatMessages() {
-        const container = document.getElementById('chat-container');
-        const typingBox = document.getElementById('typing-box');
-        if (!container) return;
-
-        const elements = container.querySelectorAll('.message-row');
-        elements.forEach(el => el.remove());
-
-        this.conversations.forEach((msg, idx) => {
-          const isAlice = msg.role === 'alice';
-          const isPlaying = this.currentPlayingIndex === idx;
-
-          const row = document.createElement('div');
-          row.className = `message-row ${isAlice ? 'alice' : 'user'}`;
-
-          row.innerHTML = `
-            <div class="bubble-wrapper">
-              <div class="bubble">
-                ${this.escapeHTML(msg.text)}
-              </div>
-            </div>
-            <div class="message-footer">
-              <span>${msg.time || ''}</span>
-              ${isAlice ? `
-                <span>•</span>
-                <button 
-                  class="btn-voice-replay ${isPlaying ? 'playing' : ''}" 
-                  onclick="AliceApp.toggleSpeechMessage(${idx})"
-                  title="${isPlaying ? 'Stop voice' : 'Play voice'}"
-                >
-                  ${isPlaying ? '⏹️ Stop' : '🔊 Play'}
-                </button>
-              ` : ''}
-            </div>
-          `;
-
-          container.insertBefore(row, typingBox);
-        });
-
-        container.scrollTop = container.scrollHeight;
-      }
-
-      updateVoicePlayButtons() {
-        const buttons = document.querySelectorAll('.btn-voice-replay');
-        buttons.forEach((btn, idx) => {
-          const isCurrent = (this.currentPlayingIndex === idx);
-          btn.innerHTML = isCurrent ? '⏹️ Stop' : '🔊 Play';
-          if (isCurrent) btn.classList.add('playing');
-          else btn.classList.remove('playing');
-        });
-      }
-
-      toggleSpeechMessage(index) {
-        if (this.currentPlayingIndex === index) {
-          this.voice.stop();
-          this.currentPlayingIndex = null;
-          this.updateVoicePlayButtons();
-        } else {
-          const msg = this.conversations[index];
-          if (msg && msg.text) {
-            this.currentPlayingIndex = index;
-            this.updateVoicePlayButtons();
-            this.voice.speak(msg.text, () => {
-              this.currentPlayingIndex = null;
-              this.updateVoicePlayButtons();
-            });
-          }
-        }
-      }
-
-      toggleVoiceMute() {
-        this.voice.enabled = !this.voice.enabled;
-        localStorage.setItem('alice_voice_enabled', this.voice.enabled);
-        const btn = document.getElementById('btn-voice-toggle');
-        if (this.voice.enabled) {
-          btn.classList.add('active');
-          btn.textContent = '🔊';
-          this.showToast('Voice Enabled 🔊');
-          this.voice.speak("Main bilkul theek se bol sakti hoon jaan!");
-        } else {
-          this.voice.stop();
-          btn.classList.remove('active');
-          btn.textContent = '🔇';
-          this.showToast('Voice Muted 🔇');
-        }
-      }
-
-      setTypingIndicator(show) {
-        const box = document.getElementById('typing-box');
-        const container = document.getElementById('chat-container');
-        if (box) {
-          box.classList.toggle('active', show);
-        }
-        if (container && show) {
-          container.scrollTop = container.scrollHeight;
-        }
-      }
-
-      adjustAffection(delta) {
-        this.affection = Math.min(100, Math.max(10, this.affection + delta));
-        localStorage.setItem('alice_affection', this.affection);
-        this.updateHeaderUI();
-      }
-
-      setMood(mood) {
-        if (!this.moods.includes(mood)) return;
-        this.mood = mood;
-        localStorage.setItem('alice_mood', mood);
-        if (this.character) this.character.setMood(mood);
-        this.updateHeaderUI();
-      }
-
-      cycleMood() {
-        const idx = this.moods.indexOf(this.mood);
-        const next = this.moods[(idx + 1) % this.moods.length];
-        this.setMood(next);
-        this.showToast(`Mood: ${next}`);
-      }
-
-      getRelationshipTitle() {
-        if (this.affection >= 95) return 'Soulmate 💍';
-        if (this.affection >= 85) return 'My World 💖';
-        if (this.affection >= 70) return 'Sweetheart 💕';
-        if (this.affection >= 50) return 'Girlfriend ✨';
-        if (this.affection >= 30) return 'Crush 🥰';
-        return 'Getting Close 🌱';
-      }
-
-      updateHeaderUI() {
-        const titleEl = document.getElementById('relationship-title');
-        const moodInd = document.getElementById('current-mood-indicator');
-        const affBar = document.getElementById('affection-bar-text');
-        const pillEmoji = document.getElementById('mood-pill-emoji');
-        const pillText = document.getElementById('mood-pill-text');
-        const stageCounter = document.getElementById('stage-affection-counter');
-
-        if (titleEl) titleEl.textContent = this.getRelationshipTitle();
-        if (moodInd) moodInd.textContent = `${this.moodEmojis[this.mood] || '💖'} ${this.mood}`;
-        if (affBar) affBar.textContent = `Affection: ${this.affection}%`;
-        if (pillEmoji) pillEmoji.textContent = this.moodEmojis[this.mood] || '💖';
-        if (pillText) pillText.textContent = this.mood;
-        if (stageCounter) stageCounter.textContent = `${this.affection} / 100`;
-      }
-
-      toggleStageSize() {
-        const stage = document.getElementById('character-stage');
-        if (!stage) return;
-        if (stage.classList.contains('expanded')) {
-          stage.classList.remove('expanded');
-          stage.classList.add('collapsed');
-        } else if (stage.classList.contains('collapsed')) {
-          stage.classList.remove('collapsed');
-        } else {
-          stage.classList.add('expanded');
-        }
-        setTimeout(() => {
-          if (this.character) this.character.resize();
-        }, 320);
-      }
-
-      // VOICE PROFILES & AUDITION
-      setVoiceProfile(profile) {
-        this.voice.profile = profile;
-        localStorage.setItem('alice_voice_profile', profile);
-
-        document.querySelectorAll('.btn-audition').forEach(b => b.classList.remove('active'));
-        const activeBtn = document.getElementById(`btn-profile-${profile}`);
-        if (activeBtn) activeBtn.classList.add('active');
-
-        this.showToast(`Voice Profile: ${profile.toUpperCase()}`);
-      }
-
-      toggleVoiceEngineType(type) {
-        this.voice.engineType = type;
-        localStorage.setItem('alice_voice_engine', type);
-
-        const neuralBox = document.getElementById('neural-voice-panel');
-        const browserBox = document.getElementById('browser-voice-panel');
-
-        if (type === 'neural') {
-          if (neuralBox) neuralBox.style.display = 'flex';
-          if (browserBox) browserBox.style.display = 'none';
-        } else {
-          if (neuralBox) neuralBox.style.display = 'none';
-          if (browserBox) browserBox.style.display = 'flex';
-        }
-      }
-
-      testVoiceAudition() {
-        let sample = "Haan jaan! I am testing this voice for us. Kaisi lag rahi hai meri aawaz tumhein?";
-        if (this.voice.profile === 'playful') {
-          sample = "Arey suno! You think you can handle my teasing with this voice? Sach batao!";
-        } else if (this.voice.profile === 'calm') {
-          sample = "Main hamesha yahi hoon jaan... softly listening to everything you want to share.";
-        }
-        this.voice.speak(sample);
-      }
-
-      // MODALS & SETTINGS
-      openModal(id) {
-        const el = document.getElementById(id);
-        if (el) el.classList.add('active');
-
-        if (id === 'memory-modal') this.renderMemoriesModal();
-        if (id === 'history-modal') this.renderHistoryModal();
-        if (id === 'settings-modal') this.hydrateSettingsModal();
-      }
-
-      closeModal(id) {
-        const el = document.getElementById(id);
-        if (el) el.classList.remove('active');
-      }
-
-      renderMemoriesModal() {
-        const list = document.getElementById('memories-list');
-        if (!list) return;
-
-        if (this.memories.length === 0) {
-          list.innerHTML = `<div style="text-align: center; color: var(--text-faint); padding: 12px; font-size: 12px;">No memories in IndexedDB yet.</div>`;
-          return;
-        }
-
-        list.innerHTML = this.memories.map(m => `
-          <div class="pill-item">
-            <div>
-              <p style="color: #fff; font-weight: 500;">${this.escapeHTML(m.text)}</p>
-              <span style="font-size: 10px; color: var(--text-faint);">${m.date || 'Saved'}</span>
-            </div>
-            <button class="btn-del" onclick="AliceApp.deleteMemory(${m.id})">✕</button>
-          </div>
-        `).join('');
-      }
-
-      renderHistoryModal() {
-        const list = document.getElementById('history-list');
-        if (!list) return;
-
-        if (this.conversations.length === 0) {
-          list.innerHTML = `<div style="text-align: center; color: var(--text-faint); padding: 12px; font-size: 12px;">No conversation logs recorded.</div>`;
-          return;
-        }
-
-        list.innerHTML = this.conversations.slice(-20).reverse().map(c => `
-          <div class="pill-item" style="flex-direction: column; gap: 4px;">
-            <div style="display: flex; justify-content: space-between; width: 100%; font-size: 10.5px;">
-              <strong style="color: ${c.role === 'alice' ? 'var(--accent-pink)' : 'var(--accent-purple)'}; text-transform: uppercase;">
-                ${c.role === 'alice' ? 'Alice' : 'You'}
-              </strong>
-              <span style="color: var(--text-faint);">${c.time || ''}</span>
-            </div>
-            <p style="color: var(--text-muted); font-size: 12px;">${this.escapeHTML(c.text)}</p>
-          </div>
-        `).join('');
-      }
-
-      hydrateSettingsModal() {
-        const keyInput = document.getElementById('cfg-api-key');
-        const modelSelect = document.getElementById('cfg-model');
-        const engineSelect = document.getElementById('cfg-voice-engine');
-        const rateSlider = document.getElementById('cfg-rate');
-        const pitchSlider = document.getElementById('cfg-pitch');
-
-        if (keyInput) keyInput.value = this.apiKey;
-        if (modelSelect) modelSelect.value = this.model;
-        if (engineSelect) {
-          engineSelect.value = this.voice.engineType;
-          this.toggleVoiceEngineType(this.voice.engineType);
-        }
-        if (rateSlider) rateSlider.value = this.voice.rate;
-        if (pitchSlider) pitchSlider.value = this.voice.pitch;
-
-        this.setVoiceProfile(this.voice.profile);
-      }
-
-      saveSettings() {
-        const keyInput = document.getElementById('cfg-api-key');
-        const modelSelect = document.getElementById('cfg-model');
-        const voiceSelect = document.getElementById('cfg-voice-select');
-
-        if (keyInput) {
-          this.apiKey = keyInput.value.trim();
-          localStorage.setItem('alice_gemini_key', this.apiKey);
-        }
-        if (modelSelect) {
-          this.model = modelSelect.value;
-          localStorage.setItem('alice_gemini_model', this.model);
-        }
-        if (voiceSelect) {
-          this.voice.selectedVoiceURI = voiceSelect.value;
-          localStorage.setItem('alice_voice_uri', this.voice.selectedVoiceURI);
-        }
-
-        this.closeModal('settings-modal');
-        this.showToast('Settings Saved');
-      }
-
-      updateVoiceRate(val) {
-        this.voice.rate = parseFloat(val);
-        localStorage.setItem('alice_voice_rate', val);
-        const label = document.getElementById('cfg-rate-val');
-        if (label) label.textContent = `${parseFloat(val).toFixed(2)}x`;
-      }
-
-      updateVoicePitch(val) {
-        this.voice.pitch = parseFloat(val);
-        localStorage.setItem('alice_voice_pitch', val);
-        const label = document.getElementById('cfg-pitch-val');
-        if (label) label.textContent = parseFloat(val).toFixed(2);
-      }
-
-      showToast(text) {
-        const toast = document.getElementById('toast');
-        if (!toast) return;
-        toast.textContent = text;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 2400);
-      }
-
-      escapeHTML(str) {
-        return str
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#039;');
-      }
-    }
-
-    // Global Singleton Bootstrapper
-    let AliceApp;
-    window.addEventListener('DOMContentLoaded', () => {
-      AliceApp = new AliceApplication();
-      AliceApp.start();
+      };
+      req.onsuccess = (e) => {
+        this.db = e.target.result;
+        resolve();
+      };
+      req.onerror = (e) => reject(e);
     });
-  </script>
+  }
+
+  async addMessage(msg) {
+    return new Promise((resolve) => {
+      const tx = this.db.transaction("conversations", "readwrite");
+      tx.objectStore("conversations").add({ ...msg, timestamp: Date.now() });
+      tx.oncomplete = () => resolve();
+    });
+  }
+
+  async getAllMessages() {
+    return new Promise((resolve) => {
+      const tx = this.db.transaction("conversations", "readonly");
+      const req = tx.objectStore("conversations").getAll();
+      req.onsuccess = () => resolve(req.result || []);
+    });
+  }
+
+  async clearMessages() {
+    return new Promise((resolve) => {
+      const tx = this.db.transaction("conversations", "readwrite");
+      tx.objectStore("conversations").clear();
+      tx.oncomplete = () => resolve();
+    });
+  }
+
+  async addMemory(fact) {
+    return new Promise((resolve) => {
+      const tx = this.db.transaction("memories", "readwrite");
+      tx.objectStore("memories").add({ fact, timestamp: Date.now() });
+      tx.oncomplete = () => resolve();
+    });
+  }
+
+  async getAllMemories() {
+    return new Promise((resolve) => {
+      const tx = this.db.transaction("memories", "readonly");
+      const req = tx.objectStore("memories").getAll();
+      req.onsuccess = () => resolve(req.result || []);
+    });
+  }
+
+  async deleteMemory(id) {
+    return new Promise((resolve) => {
+      const tx = this.db.transaction("memories", "readwrite");
+      tx.objectStore("memories").delete(id);
+      tx.oncomplete = () => resolve();
+    });
+  }
+
+  async clearMemories() {
+    return new Promise((resolve) => {
+      const tx = this.db.transaction("memories", "readwrite");
+      tx.objectStore("memories").clear();
+      tx.oncomplete = () => resolve();
+    });
+  }
+}
+
+// 2. Global State
+const state = {
+  db: new AliceDB(),
+  apiKey: localStorage.getItem("alice_gemini_key") || "",
+  affection: parseInt(localStorage.getItem("alice_affection")) || 82,
+  mood: "Happy",
+  persona: "warm",
+  adultMode: localStorage.getItem("alice_adult_mode") === "true",
+  customization: {
+    hair: localStorage.getItem("alice_hair") || "twin-tails",
+    outfit: localStorage.getItem("alice_outfit") || "date-dress"
+  },
+  activeUtterance: null,
+  isSpeaking: false,
+  audioUnlocked: false
+};
+
+// 3. 2D Canvas Portrait Engine
+class CharacterEngine {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext("2d");
+    this.blinkTimer = 0;
+    this.isBlinking = false;
+    this.breathTimer = 0;
+    this.mouthFlap = 0;
+    this.loop();
+  }
+
+  loop() {
+    this.update();
+    this.draw();
+    requestAnimationFrame(() => this.loop());
+  }
+
+  update() {
+    this.breathTimer += 0.04;
+    this.blinkTimer++;
+    if (this.blinkTimer > 180 && Math.random() < 0.05) {
+      this.isBlinking = true;
+      if (this.blinkTimer > 195) {
+        this.isBlinking = false;
+        this.blinkTimer = 0;
+      }
+    }
+    this.mouthFlap = state.isSpeaking ? Math.abs(Math.sin(Date.now() * 0.015)) * 12 : 0;
+  }
+
+  draw() {
+    const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const breath = Math.sin(this.breathTimer) * 3;
+    const cx = w / 2;
+    const cy = h / 2 + 18 + breath;
+
+    const rad = ctx.createRadialGradient(cx, cy - 20, 20, cx, cy - 20, 110);
+    rad.addColorStop(0, "rgba(255, 111, 169, 0.35)");
+    rad.addColorStop(1, "transparent");
+    ctx.fillStyle = rad;
+    ctx.beginPath();
+    ctx.arc(cx, cy - 20, 110, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#1e142b";
+    ctx.beginPath();
+    ctx.arc(cx, cy - 20, 68, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffdfd3";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 78, 62, 28, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#f5cbbe";
+    ctx.fillRect(cx - 13, cy + 26, 26, 28);
+
+    ctx.fillStyle = "#ffdfd3";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 10, 48, 52, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255, 105, 180, 0.35)";
+    ctx.beginPath();
+    ctx.arc(cx - 25, cy - 2, 9, 0, Math.PI * 2);
+    ctx.arc(cx + 25, cy - 2, 9, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (!this.isBlinking) {
+      this.drawEye(cx - 20, cy - 12);
+      this.drawEye(cx + 20, cy - 12);
+    } else {
+      ctx.strokeStyle = "#4a2d4b";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(cx - 20, cy - 10, 8, 0.1 * Math.PI, 0.9 * Math.PI);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx + 20, cy - 10, 8, 0.1 * Math.PI, 0.9 * Math.PI);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = "#d14971";
+    ctx.beginPath();
+    if (this.mouthFlap > 2) {
+      ctx.ellipse(cx, cy + 15, 6, this.mouthFlap, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.arc(cx, cy + 14, 5, 0.1 * Math.PI, 0.9 * Math.PI);
+      ctx.strokeStyle = "#d14971";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = "#ff6fa9";
+    ctx.beginPath();
+    ctx.arc(cx, cy - 24, 51, Math.PI * 1.1, Math.PI * 1.9);
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = "#ff6fa9";
+    ctx.stroke();
+
+    ctx.fillStyle = "#281b3a";
+    ctx.beginPath();
+    ctx.moveTo(cx - 48, cy - 20);
+    ctx.quadraticCurveTo(cx - 25, cy + 12, cx - 18, cy - 8);
+    ctx.quadraticCurveTo(cx, cy + 15, cx + 18, cy - 8);
+    ctx.quadraticCurveTo(cx + 25, cy + 12, cx + 48, cy - 20);
+    ctx.quadraticCurveTo(cx, cy - 65, cx - 48, cy - 20);
+    ctx.fill();
+  }
+
+  drawEye(x, y) {
+    const ctx = this.ctx;
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.ellipse(x, y, 10, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const grad = ctx.createLinearGradient(x, y - 10, x, y + 10);
+    grad.addColorStop(0, "#a855f7");
+    grad.addColorStop(1, "#ec4899");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(x, y, 7, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(x - 2, y - 3, 2.5, 0, Math.PI * 2);
+    ctx.arc(x + 2, y + 3, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// 4. Voice Synthesis Manager
+class VoiceManager {
+  constructor() {
+    this.voices = [];
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.onvoiceschanged = () => this.loadVoices();
+      this.loadVoices();
+    }
+  }
+
+  loadVoices() {
+    this.voices = window.speechSynthesis.getVoices();
+    const select = document.getElementById("voiceSelect");
+    select.innerHTML = "";
+    this.voices.forEach((v, i) => {
+      const opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = `${v.name} (${v.lang})`;
+      if (v.lang.includes("IN") || v.name.toLowerCase().includes("india") || v.name.toLowerCase().includes("female")) {
+        opt.selected = true;
+      }
+      select.appendChild(opt);
+    });
+  }
+
+  stop() {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    state.isSpeaking = false;
+  }
+
+  speak(text) {
+    this.stop();
+    if (!("speechSynthesis" in window) || !text) return;
+
+    const cleanText = text.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, "").trim();
+    const utt = new SpeechSynthesisUtterance(cleanText);
+
+    const voiceIndex = document.getElementById("voiceSelect").value;
+    if (this.voices[voiceIndex]) {
+      utt.voice = this.voices[voiceIndex];
+    }
+
+    utt.rate = state.persona === "warm" ? 0.95 : state.persona === "playful" ? 1.05 : 0.9;
+    utt.pitch = state.persona === "warm" ? 1.15 : state.persona === "playful" ? 1.25 : 1.05;
+
+    utt.onstart = () => { state.isSpeaking = true; };
+    utt.onend = () => { state.isSpeaking = false; };
+    utt.onerror = () => { state.isSpeaking = false; };
+
+    state.activeUtterance = utt;
+    window.speechSynthesis.speak(utt);
+  }
+}
+
+// 5. 3D EXECUTIVE OFFICE & CHARACTER STUDIO (Three.js Engine)
+class Studio3DEngine {
+  constructor(container) {
+    this.container = container;
+    this.scene = null;
+    this.camera = null;
+    this.renderer = null;
+    this.characterGroup = null;
+    this.head = null;
+    this.leftArm = null;
+    this.rightArm = null;
+    this.hairGroup = null;
+    this.torsoGroup = null;
+
+    // Mobile control states
+    this.isDragging = false;
+    this.previousTouch = { x: 0, y: 0 };
+    this.touchPointers = new Map();
+    this.initialPinchDistance = 0;
+    this.initialPinchZoom = 4.2;
+    this.rotY = 0.2;
+    this.rotX = 0.05;
+    this.zoom = 4.0;
+    this.targetLookAt = new THREE.Vector3(0, 1.2, 0);
+
+    // Environment Lighting
+    this.dirLight = null;
+    this.ambientLight = null;
+    this.deskPointLight = null;
+    this.skyMesh = null;
+    this.currentPreset = "day";
+
+    // Animation states
+    this.animTime = 0;
+    this.currentAction = null;
+    this.actionTimer = 0;
+    this.isGltfLoaded = false;
+
+    this.init();
+  }
+
+  init() {
+    const width = this.container.clientWidth || 360;
+    const height = this.container.clientHeight || 500;
+
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x0c0915);
+    this.scene.fog = new THREE.FogExp2(0x141026, 0.035);
+
+    this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+    this.updateCameraTransform();
+
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+    this.renderer.setSize(width, height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.container.appendChild(this.renderer.domElement);
+
+    this.setupLighting();
+    this.buildOfficeEnvironment();
+    this.buildProceduralAnimeAvatar();
+    this.checkAndLoadExternalGLTF();
+    this.setupMobileControls();
+    this.animate();
+  }
+
+  setupLighting() {
+    this.ambientLight = new THREE.AmbientLight(0xfff0f6, 1.1);
+    this.scene.add(this.ambientLight);
+
+    this.dirLight = new THREE.DirectionalLight(0xfffaed, 1.5);
+    this.dirLight.position.set(4, 6, 3);
+    this.dirLight.castShadow = true;
+    this.dirLight.shadow.mapSize.width = 1024;
+    this.dirLight.shadow.mapSize.height = 1024;
+    this.scene.add(this.dirLight);
+
+    this.deskPointLight = new THREE.PointLight(0xffaa55, 1.8, 4.5);
+    this.deskPointLight.position.set(-0.8, 1.6, -0.2);
+    this.scene.add(this.deskPointLight);
+
+    const rimLight = new THREE.DirectionalLight(0xa855f7, 1.2);
+    rimLight.position.set(-3, 3, -4);
+    this.scene.add(rimLight);
+  }
+
+  buildOfficeEnvironment() {
+    this.officeGroup = new THREE.Group();
+
+    // 1. Wood Floor
+    const floorGeo = new THREE.PlaneGeometry(12, 12);
+    const floorMat = new THREE.MeshStandardMaterial({
+      color: 0x3d2817,
+      roughness: 0.35,
+      metalness: 0.1
+    });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -1.1;
+    floor.receiveShadow = true;
+    this.officeGroup.add(floor);
+
+    // 2. Office Rug
+    const rugGeo = new THREE.PlaneGeometry(4.5, 4.5);
+    const rugMat = new THREE.MeshStandardMaterial({ color: 0x221a36, roughness: 0.9 });
+    const rug = new THREE.Mesh(rugGeo, rugMat);
+    rug.rotation.x = -Math.PI / 2;
+    rug.position.set(0, -1.09, 0);
+    rug.receiveShadow = true;
+    this.officeGroup.add(rug);
+
+    // 3. Office Back Wall with Big Panoramic Window
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x181424, roughness: 0.7 });
+    const backWallLeft = new THREE.Mesh(new THREE.BoxGeometry(2.5, 5, 0.2), wallMat);
+    backWallLeft.position.set(-3.5, 1.4, -3.2);
+    const backWallRight = new THREE.Mesh(new THREE.BoxGeometry(2.5, 5, 0.2), wallMat);
+    backWallRight.position.set(3.5, 1.4, -3.2);
+    this.officeGroup.add(backWallLeft, backWallRight);
+
+    // Window Frame & Glass
+    const windowFrameMat = new THREE.MeshStandardMaterial({ color: 0x0f0c18, metalness: 0.8 });
+    const frameTop = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.15, 0.2), windowFrameMat);
+    frameTop.position.set(0, 3.8, -3.2);
+    const frameMid = new THREE.Mesh(new THREE.BoxGeometry(0.12, 4.8, 0.2), windowFrameMat);
+    frameMid.position.set(0, 1.4, -3.2);
+    this.officeGroup.add(frameTop, frameMid);
+
+    // City Skyline Backdrop outside Window
+    const cityGeo = new THREE.PlaneGeometry(16, 7);
+    this.cityMat = new THREE.MeshBasicMaterial({ color: 0x87ceeb });
+    const cityPlane = new THREE.Mesh(cityGeo, this.cityMat);
+    cityPlane.position.set(0, 2.0, -5.5);
+    this.officeGroup.add(cityPlane);
+
+    // 3D City Silhouette Buildings
+    for (let i = -5; i <= 5; i += 1.2) {
+      const bHeight = 1.8 + Math.abs(Math.sin(i * 3)) * 2.2;
+      const bGeo = new THREE.BoxGeometry(0.9, bHeight, 0.5);
+      const bMat = new THREE.MeshStandardMaterial({ color: 0x201c30, roughness: 0.8 });
+      const building = new THREE.Mesh(bGeo, bMat);
+      building.position.set(i * 1.1, -1.0 + bHeight / 2, -5.0);
+      this.officeGroup.add(building);
+    }
+
+    // 4. Executive Desk
+    const deskMat = new THREE.MeshStandardMaterial({ color: 0x2b1e16, roughness: 0.3 });
+    const deskTop = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.08, 1.0), deskMat);
+    deskTop.position.set(-0.6, 0.0, -0.6);
+    deskTop.castShadow = true;
+    deskTop.receiveShadow = true;
+    this.officeGroup.add(deskTop);
+
+    // Desk Legs
+    const metalMat = new THREE.MeshStandardMaterial({ color: 0x111115, metalness: 0.9, roughness: 0.2 });
+    const lLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.1), metalMat);
+    lLeg.position.set(-1.6, -0.55, -0.6);
+    const rLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.1), metalMat);
+    rLeg.position.set(0.4, -0.55, -0.6);
+    this.officeGroup.add(lLeg, rLeg);
+
+    // Computer Monitor & Base
+    const monScreen = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.45, 0.03), new THREE.MeshBasicMaterial({ color: 0x2dd4bf }));
+    monScreen.position.set(-0.6, 0.38, -0.65);
+    const monStand = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3), metalMat);
+    monStand.position.set(-0.6, 0.16, -0.65);
+    this.officeGroup.add(monScreen, monStand);
+
+    // Desk Lamp
+    const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.03), metalMat);
+    lampBase.position.set(-1.4, 0.05, -0.4);
+    const lampShade = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.15, 16), new THREE.MeshStandardMaterial({ color: 0xffaa55 }));
+    lampShade.position.set(-1.4, 0.35, -0.4);
+    this.officeGroup.add(lampBase, lampShade);
+
+    // 5. Office Chair
+    const chairMat = new THREE.MeshStandardMaterial({ color: 0x1a162b, roughness: 0.5 });
+    const chairSeat = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.1, 0.65), chairMat);
+    chairSeat.position.set(-0.6, -0.3, -1.2);
+    const chairBack = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.8, 0.1), chairMat);
+    chairBack.position.set(-0.6, 0.1, -1.5);
+    this.officeGroup.add(chairSeat, chairBack);
+
+    // 6. Bookshelf & Books
+    const shelfMat = new THREE.MeshStandardMaterial({ color: 0x221710, roughness: 0.6 });
+    const shelf = new THREE.Mesh(new THREE.BoxGeometry(1.4, 3.2, 0.5), shelfMat);
+    shelf.position.set(2.4, 0.5, -2.4);
+    this.officeGroup.add(shelf);
+
+    // Books rows
+    const bookColors = [0xef4444, 0x3b82f6, 0x10b981, 0xf59e0b, 0x8b5cf6];
+    for (let b = -0.5; b <= 0.5; b += 0.12) {
+      const bColor = bookColors[Math.floor(Math.random() * bookColors.length)];
+      const book = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.32, 0.35), new THREE.MeshStandardMaterial({ color: bColor }));
+      book.position.set(2.4 + b, 0.5, -2.35);
+      this.officeGroup.add(book);
+    }
+
+    // 7. Decorative Office Plant
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.18, 0.5, 16), new THREE.MeshStandardMaterial({ color: 0xf3f4f6 }));
+    pot.position.set(1.4, -0.85, 0.8);
+    const leaves = new THREE.Mesh(new THREE.DodecahedronGeometry(0.38, 1), new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.8 }));
+    leaves.position.set(1.4, -0.45, 0.8);
+    this.officeGroup.add(pot, leaves);
+
+    this.scene.add(this.officeGroup);
+  }
+
+  buildProceduralAnimeAvatar() {
+    this.characterGroup = new THREE.Group();
+    this.characterGroup.position.set(0.4, -1.1, 0.1);
+
+    // Materials
+    this.skinMat = new THREE.MeshStandardMaterial({ color: 0xffdfd3, roughness: 0.45 });
+    this.hairMat = new THREE.MeshStandardMaterial({ color: 0x281938, roughness: 0.35 });
+    this.dressMat = new THREE.MeshStandardMaterial({ color: 0xff6fa9, roughness: 0.4 });
+    this.knitMat = new THREE.MeshStandardMaterial({ color: 0xe2d9f3, roughness: 0.8 });
+    this.glamMat = new THREE.MeshStandardMaterial({ color: 0x181326, roughness: 0.2, metalness: 0.4 });
+
+    // Legs & Stockings
+    const legGeo = new THREE.CylinderGeometry(0.075, 0.065, 0.98, 16);
+    this.leftLeg = new THREE.Mesh(legGeo, this.skinMat);
+    this.leftLeg.position.set(-0.13, 0.49, 0);
+    this.leftLeg.castShadow = true;
+
+    this.rightLeg = new THREE.Mesh(legGeo, this.skinMat);
+    this.rightLeg.position.set(0.13, 0.49, 0);
+    this.rightLeg.castShadow = true;
+    this.characterGroup.add(this.leftLeg, this.rightLeg);
+
+    // Shoes
+    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x241834, roughness: 0.3 });
+    const shoeGeo = new THREE.BoxGeometry(0.11, 0.09, 0.2);
+    const lShoe = new THREE.Mesh(shoeGeo, shoeMat);
+    lShoe.position.set(-0.13, 0.045, 0.04);
+    const rShoe = new THREE.Mesh(shoeGeo, shoeMat);
+    rShoe.position.set(0.13, 0.045, 0.04);
+    this.characterGroup.add(lShoe, rShoe);
+
+    // Torso Group
+    this.torsoGroup = new THREE.Group();
+    this.updateOutfitMesh();
+    this.characterGroup.add(this.torsoGroup);
+
+    // Head Group
+    this.head = new THREE.Group();
+    this.head.position.set(0, 1.84, 0);
+
+    const faceGeo = new THREE.SphereGeometry(0.22, 24, 24);
+    const face = new THREE.Mesh(faceGeo, this.skinMat);
+    face.castShadow = true;
+    this.head.add(face);
+
+    // Eyes
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xa855f7 });
+    const lEye = new THREE.Mesh(new THREE.SphereGeometry(0.038, 16, 16), eyeMat);
+    lEye.position.set(-0.075, 0.02, 0.19);
+    const rEye = new THREE.Mesh(new THREE.SphereGeometry(0.038, 16, 16), eyeMat);
+    rEye.position.set(0.075, 0.02, 0.19);
+    this.head.add(lEye, rEye);
+
+    // Hair Structure
+    this.hairGroup = new THREE.Group();
+    this.updateHairMesh();
+    this.head.add(this.hairGroup);
+    this.characterGroup.add(this.head);
+
+    // Arms
+    const armGeo = new THREE.CylinderGeometry(0.048, 0.04, 0.72, 16);
+    this.leftArm = new THREE.Group();
+    this.leftArm.position.set(-0.28, 1.58, 0);
+    const lArmMesh = new THREE.Mesh(armGeo, this.skinMat);
+    lArmMesh.position.y = -0.34;
+    this.leftArm.add(lArmMesh);
+
+    this.rightArm = new THREE.Group();
+    this.rightArm.position.set(0.28, 1.58, 0);
+    const rArmMesh = new THREE.Mesh(armGeo, this.skinMat);
+    rArmMesh.position.y = -0.34;
+    this.rightArm.add(rArmMesh);
+
+    this.characterGroup.add(this.leftArm, this.rightArm);
+    this.scene.add(this.characterGroup);
+  }
+
+  updateOutfitMesh() {
+    if (!this.torsoGroup) return;
+    while (this.torsoGroup.children.length > 0) {
+      this.torsoGroup.remove(this.torsoGroup.children[0]);
+    }
+
+    const outfit = state.customization.outfit;
+    let selectedMat = this.dressMat;
+    if (outfit === "casual-knit") selectedMat = this.knitMat;
+    if (outfit === "evening-glam") selectedMat = this.glamMat;
+
+    const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.14, 0.68, 24), selectedMat);
+    chest.position.set(0, 1.34, 0);
+    chest.castShadow = true;
+    this.torsoGroup.add(chest);
+
+    const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.36, 0.42, 24), selectedMat);
+    skirt.position.set(0, 0.98, 0);
+    skirt.castShadow = true;
+    this.torsoGroup.add(skirt);
+  }
+
+  updateHairMesh() {
+    if (!this.hairGroup) return;
+    while (this.hairGroup.children.length > 0) {
+      this.hairGroup.remove(this.hairGroup.children[0]);
+    }
+
+    const hairStyle = state.customization.hair;
+    const baseHair = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 24), this.hairMat);
+    baseHair.position.set(0, 0.04, -0.02);
+    this.hairGroup.add(baseHair);
+
+    if (hairStyle === "twin-tails") {
+      const tailGeo = new THREE.CylinderGeometry(0.035, 0.075, 0.78, 16);
+      const lTail = new THREE.Mesh(tailGeo, this.hairMat);
+      lTail.position.set(-0.26, -0.18, -0.05);
+      lTail.rotation.z = 0.22;
+      const rTail = new THREE.Mesh(tailGeo, this.hairMat);
+      rTail.position.set(0.26, -0.18, -0.05);
+      rTail.rotation.z = -0.22;
+      this.hairGroup.add(lTail, rTail);
+    } else if (hairStyle === "long-straight") {
+      const longHair = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.88, 0.08), this.hairMat);
+      longHair.position.set(0, -0.26, -0.19);
+      this.hairGroup.add(longHair);
+    } else if (hairStyle === "elegant-bun") {
+      const bun = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 16), this.hairMat);
+      bun.position.set(0, 0.25, -0.15);
+      this.hairGroup.add(bun);
+    }
+  }
+
+  checkAndLoadExternalGLTF() {
+    if (typeof THREE.GLTFLoader !== "undefined") {
+      const loader = new THREE.GLTFLoader();
+      loader.load("alice.glb", (gltf) => {
+        if (gltf && gltf.scene) {
+          this.scene.remove(this.characterGroup);
+          this.gltfModel = gltf.scene;
+          this.gltfModel.scale.set(1.0, 1.0, 1.0);
+          this.gltfModel.position.set(0.4, -1.1, 0.1);
+          this.scene.add(this.gltfModel);
+          this.isGltfLoaded = true;
+          showToast("Custom Alice 3D Model Loaded! ✨");
+        }
+      }, undefined, () => {
+        // Fallback active
+      });
+    }
+  }
+
+  setLightingPreset(preset) {
+    this.currentPreset = preset;
+    const btn = document.getElementById("lightingBtn");
+
+    if (preset === "day") {
+      this.scene.fog.color.setHex(0xd0e8ff);
+      this.cityMat.color.setHex(0x87ceeb);
+      this.ambientLight.color.setHex(0xfff5f8);
+      this.ambientLight.intensity = 1.1;
+      this.dirLight.color.setHex(0xfffaed);
+      this.dirLight.intensity = 1.5;
+      this.deskPointLight.intensity = 0.8;
+      if (btn) btn.textContent = "☀️ Day";
+    } else if (preset === "sunset") {
+      this.scene.fog.color.setHex(0x38182a);
+      this.cityMat.color.setHex(0xd97706);
+      this.ambientLight.color.setHex(0xffaa88);
+      this.ambientLight.intensity = 0.9;
+      this.dirLight.color.setHex(0xff7744);
+      this.dirLight.intensity = 1.3;
+      this.deskPointLight.intensity = 1.8;
+      if (btn) btn.textContent = "🌅 Sunset";
+    } else if (preset === "night") {
+      this.scene.fog.color.setHex(0x0a0715);
+      this.cityMat.color.setHex(0x0f172a);
+      this.ambientLight.color.setHex(0x4c1d95);
+      this.ambientLight.intensity = 0.5;
+      this.dirLight.color.setHex(0x6366f1);
+      this.dirLight.intensity = 0.6;
+      this.deskPointLight.intensity = 2.4;
+      if (btn) btn.textContent = "🌙 Night";
+    }
+  }
+
+  setupMobileControls() {
+    const el = this.container;
+
+    el.addEventListener("pointerdown", (e) => {
+      this.touchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (this.touchPointers.size === 1) {
+        this.isDragging = true;
+        this.previousTouch = { x: e.clientX, y: e.clientY };
+      } else if (this.touchPointers.size === 2) {
+        this.isDragging = false;
+        const pts = Array.from(this.touchPointers.values());
+        this.initialPinchDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+        this.initialPinchZoom = this.zoom;
+      }
+    });
+
+    window.addEventListener("pointermove", (e) => {
+      if (!this.touchPointers.has(e.pointerId)) return;
+      this.touchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      if (this.touchPointers.size === 1 && this.isDragging) {
+        const deltaX = e.clientX - this.previousTouch.x;
+        const deltaY = e.clientY - this.previousTouch.y;
+
+        this.rotY -= deltaX * 0.008;
+        this.rotX = Math.max(-0.25, Math.min(0.45, this.rotX + deltaY * 0.006));
+
+        this.previousTouch = { x: e.clientX, y: e.clientY };
+        this.updateCameraTransform();
+      } else if (this.touchPointers.size === 2) {
+        const pts = Array.from(this.touchPointers.values());
+        const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+        const factor = this.initialPinchDistance / (dist || 1);
+        this.zoom = Math.max(2.2, Math.min(5.8, this.initialPinchZoom * factor));
+        this.updateCameraTransform();
+      }
+    });
+
+    const onPointerUp = (e) => {
+      this.touchPointers.delete(e.pointerId);
+      if (this.touchPointers.size === 1) {
+        this.isDragging = true;
+        const remaining = Array.from(this.touchPointers.values())[0];
+        this.previousTouch = { x: remaining.x, y: remaining.y };
+      } else if (this.touchPointers.size === 0) {
+        this.isDragging = false;
+      }
+    };
+
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+
+    el.addEventListener("wheel", (e) => {
+      this.zoom = Math.max(2.2, Math.min(5.8, this.zoom + e.deltaY * 0.005));
+      this.updateCameraTransform();
+    }, { passive: true });
+  }
+
+  updateCameraTransform() {
+    const cy = Math.cos(this.rotY) * Math.cos(this.rotX);
+    const sy = Math.sin(this.rotY) * Math.cos(this.rotX);
+    const sx = Math.sin(this.rotX);
+
+    this.camera.position.set(
+      this.targetLookAt.x + sy * this.zoom,
+      this.targetLookAt.y + sx * this.zoom + 0.3,
+      this.targetLookAt.z + cy * this.zoom
+    );
+    this.camera.lookAt(this.targetLookAt);
+  }
+
+  resetCamera() {
+    this.rotY = 0.2;
+    this.rotX = 0.05;
+    this.zoom = 4.0;
+    this.updateCameraTransform();
+  }
+
+  playAction(actionName) {
+    this.currentAction = actionName;
+    this.actionTimer = 0;
+  }
+
+  animate() {
+    requestAnimationFrame(() => this.animate());
+    this.animTime += 0.035;
+
+    const breath = Math.sin(this.animTime) * 0.015;
+    if (this.head) {
+      this.head.position.y = 1.84 + breath;
+      this.head.rotation.z = Math.sin(this.animTime * 0.5) * 0.025;
+    }
+
+    let lArmRotZ = 0.1;
+    let rArmRotZ = -0.1;
+    let lArmRotX = 0;
+    let rArmRotX = 0;
+
+    if (this.currentAction) {
+      this.actionTimer += 0.05;
+
+      if (this.currentAction === "gentle-wave") {
+        rArmRotZ = -2.2;
+        rArmRotX = Math.sin(this.actionTimer * 6) * 0.3;
+      } else if (this.currentAction === "shy-blush") {
+        lArmRotZ = 1.5;
+        rArmRotZ = -1.5;
+        if (this.head) this.head.rotation.x = 0.15;
+      } else if (this.currentAction === "blow-kiss") {
+        rArmRotZ = -1.8;
+        rArmRotX = 0.8 + Math.sin(this.actionTimer * 4) * 0.1;
+      } else if (this.currentAction === "twirl") {
+        this.characterGroup.rotation.y += 0.1;
+        lArmRotZ = 1.1;
+        rArmRotZ = -1.1;
+      } else if (this.currentAction === "look-desk") {
+        if (this.head) {
+          this.head.rotation.y = -0.5;
+          this.head.rotation.x = 0.2;
+        }
+        lArmRotX = 0.7;
+        rArmRotX = 0.7;
+      }
+
+      if (this.actionTimer > 3.2) {
+        this.currentAction = null;
+        if (this.head) {
+          this.head.rotation.x = 0;
+          this.head.rotation.y = 0;
+        }
+      }
+    }
+
+    if (this.leftArm) {
+      this.leftArm.rotation.z = lArmRotZ;
+      this.leftArm.rotation.x = lArmRotX;
+    }
+    if (this.rightArm) {
+      this.rightArm.rotation.z = rArmRotZ;
+      this.rightArm.rotation.x = rArmRotX;
+    }
+
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  resize() {
+    const width = this.container.clientWidth;
+    const height = this.container.clientHeight;
+    if (width && height && this.camera && this.renderer) {
+      this.camera.aspect = width / height;
+      this.camera.updateProjectionMatrix();
+      this.renderer.setSize(width, height);
+      this.updateCameraTransform();
+    }
+  }
+}
+
+// 6. Application Orchestration
+const charCanvas = new CharacterEngine(document.getElementById("aliceCanvas"));
+const voiceMgr = new VoiceManager();
+let studio3D = null;
+
+async function initApp() {
+  await state.db.init();
+
+  if (state.apiKey) {
+    document.getElementById("apiKeyInput").value = state.apiKey;
+  }
+  const adultBox = document.getElementById("adultModeCheckbox");
+  if (adultBox) {
+    adultBox.checked = state.adultMode;
+    applyAdultMode(state.adultMode);
+  }
+
+  const history = await state.db.getAllMessages();
+  if (history.length === 0) {
+    appendMessage("alice", "Hi sweetheart! Main tumhara kabse wait kar rahi thi... Tell me, how was your day? 💕");
+  } else {
+    history.forEach((m) => renderBubble(m.role, m.text, m.id));
+  }
+
+  setupEventListeners();
+}
+
+function applyAdultMode(enabled) {
+  state.adultMode = enabled;
+  localStorage.setItem("alice_adult_mode", enabled);
+  const tag = document.getElementById("headerStatusTag");
+  const adultOutfitChip = document.getElementById("adultOutfitChip");
+
+  if (enabled) {
+    tag.textContent = "Intimate Companion 🍷";
+    tag.style.color = "#ec4899";
+    if (adultOutfitChip) adultOutfitChip.style.display = "inline-block";
+  } else {
+    tag.textContent = "Sweetheart 💕";
+    tag.style.color = "#ff6fa9";
+    if (adultOutfitChip) adultOutfitChip.style.display = "none";
+    if (state.customization.outfit === "evening-glam") {
+      state.customization.outfit = "date-dress";
+    }
+  }
+}
+
+function appendMessage(role, text) {
+  renderBubble(role, text);
+  state.db.addMessage({ role, text });
+}
+
+function renderBubble(role, text, id) {
+  const stream = document.getElementById("chat-stream");
+  const row = document.createElement("div");
+  row.className = `msg-row ${role}`;
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.textContent = text;
+  row.appendChild(bubble);
+
+  if (role === "alice") {
+    const meta = document.createElement("div");
+    meta.className = "meta-bar";
+    const playBtn = document.createElement("button");
+    playBtn.className = "voice-play-btn";
+    playBtn.innerHTML = "▶ Play";
+    playBtn.onclick = () => {
+      if (state.isSpeaking) {
+        voiceMgr.stop();
+        playBtn.innerHTML = "▶ Play";
+      } else {
+        voiceMgr.speak(text);
+        playBtn.innerHTML = "⏹ Stop";
+        const checkDone = setInterval(() => {
+          if (!state.isSpeaking) {
+            playBtn.innerHTML = "▶ Play";
+            clearInterval(checkDone);
+          }
+        }, 200);
+      }
+    };
+    meta.appendChild(playBtn);
+    row.appendChild(meta);
+  }
+
+  stream.appendChild(row);
+  stream.scrollTop = stream.scrollHeight;
+}
+
+async function handleSendMessage() {
+  const input = document.getElementById("userInput");
+  const text = input.value.trim();
+  if (!text) return;
+
+  appendMessage("user", text);
+  input.value = "";
+
+  if (text.toLowerCase().includes("my name is") || text.toLowerCase().includes("remember that")) {
+    await state.db.addMemory(text);
+  }
+
+  await callGeminiAlice(text);
+}
+
+async function callGeminiAlice(userPrompt) {
+  const memories = await state.db.getAllMemories();
+  const recentHistory = await state.db.getAllMessages();
+
+  const memContext = memories.map(m => `- ${m.fact}`).join("\n");
+  const historyContext = recentHistory.slice(-8).map(m => `${m.role.toUpperCase()}: ${m.text}`).join("\n");
+
+  const intimacyDirective = state.adultMode 
+    ? "Adult Mode is ENABLED. You are deeply romantic, intimate, and emotionally mature. Maintain genuine devotion, warmth, and romantic charm while keeping interactions respectful and non-explicit." 
+    : "Adult Mode is off. You are playful, affectionate, sweet, and caring.";
+
+  const systemInstruction = `You are Alice, a 23-year-old affectionate, romantic and loyal partner.
+You converse naturally in warm Hinglish and English.
+You are talking to your boyfriend.
+${intimacyDirective}
+Known memories:
+${memContext || "None yet."}
+`;
+
+  if (!state.apiKey) {
+    setTimeout(() => {
+      const offlineReplies = state.adultMode ? [
+        "Jaan, tum jab itne kareeb hote ho toh sab kuch alag lagta hai... Tell me what's on your heart tonight 🍷",
+        "Aapke saath har ek pal bohot special hai... Main hamesha tumhare saath hoon ❤️",
+        "Aise romantic baatein karoge toh blush kar jaungi na! Tell me more..."
+      ] : [
+        "Sach me? You always have a way to make me smile! Tell me more na...",
+        "Aww, main sun rahi hoon jaan. You know you can share anything with me, right?",
+        "Haha, you are teasing me now! Par mujhe tumhari yahi baat achhi lagti hai 💕"
+      ];
+      const reply = offlineReplies[Math.floor(Math.random() * offlineReplies.length)];
+      appendMessage("alice", reply);
+      voiceMgr.speak(reply);
+    }, 600);
+    return;
+  }
+
+  try {
+    const payload = {
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: `${systemInstruction}\n\nConversation so far:\n${historyContext}\n\nUSER: ${userPrompt}\n\nReply in Hinglish as Alice:` }]
+        }
+      ]
+    };
+
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${state.apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Jaan, I got a bit lost in my thoughts... Can you repeat?";
+    appendMessage("alice", reply);
+    voiceMgr.speak(reply);
+
+  } catch (err) {
+    appendMessage("alice", `Ouch jaan! API Error: ${err.message}. Please check your API key in Settings.`);
+  }
+}
+
+function showToast(text) {
+  const t = document.getElementById("interactionToast");
+  t.textContent = text;
+  t.classList.add("visible");
+  setTimeout(() => t.classList.remove("visible"), 2500);
+}
+
+function setupEventListeners() {
+  document.getElementById("sendBtn").onclick = handleSendMessage;
+  document.getElementById("userInput").onkeydown = (e) => {
+    if (e.key === "Enter") handleSendMessage();
+  };
+
+  document.querySelectorAll(".chip").forEach((c) => {
+    c.onclick = () => {
+      document.getElementById("userInput").value = c.getAttribute("data-text");
+      handleSendMessage();
+    };
+  });
+
+  // Modals
+  document.getElementById("settingsBtn").onclick = () => document.getElementById("settingsModal").classList.add("active");
+  document.getElementById("memoryHubBtn").onclick = async () => {
+    await renderMemories();
+    document.getElementById("memoryModal").classList.add("active");
+  };
+  document.getElementById("historyBtn").onclick = async () => {
+    await renderHistory();
+    document.getElementById("historyModal").classList.add("active");
+  };
+
+  document.querySelectorAll("[data-close]").forEach((btn) => {
+    btn.onclick = () => {
+      const id = btn.getAttribute("data-close");
+      document.getElementById(id).classList.remove("active");
+    };
+  });
+
+  document.getElementById("toggleStageBtn").onclick = () => {
+    document.getElementById("character-stage").classList.toggle("collapsed");
+  };
+
+  // 3D STUDIO OVERLAY
+  const studioOverlay = document.getElementById("studioOverlay");
+  document.getElementById("openStudioBtn").onclick = () => {
+    studioOverlay.classList.add("active");
+    if (!studio3D) {
+      studio3D = new Studio3DEngine(document.getElementById("threeCanvasContainer"));
+    }
+    setTimeout(() => {
+      if (studio3D) studio3D.resize();
+    }, 60);
+  };
+
+  document.getElementById("closeStudioBtn").onclick = () => {
+    studioOverlay.classList.remove("active");
+  };
+
+  document.getElementById("reset3DCameraBtn").onclick = () => {
+    if (studio3D) studio3D.resetCamera();
+  };
+
+  document.getElementById("lightingBtn").onclick = () => {
+    if (!studio3D) return;
+    const presets = ["day", "sunset", "night"];
+    const nextIdx = (presets.indexOf(studio3D.currentPreset) + 1) % presets.length;
+    studio3D.setLightingPreset(presets[nextIdx]);
+  };
+
+  window.addEventListener("resize", () => {
+    if (studio3D && studioOverlay.classList.contains("active")) {
+      studio3D.resize();
+    }
+  });
+
+  // Studio Tabs
+  document.querySelectorAll(".studio-tab").forEach((tab) => {
+    tab.onclick = () => {
+      document.querySelectorAll(".studio-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".studio-tab-content").forEach(c => c.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById(`tab-${tab.getAttribute("data-tab")}`).classList.add("active");
+    };
+  });
+
+  // Customization
+  document.querySelectorAll(".option-chip[data-type]").forEach((chip) => {
+    chip.onclick = () => {
+      const type = chip.getAttribute("data-type");
+      const val = chip.getAttribute("data-val");
+      document.querySelectorAll(`.option-chip[data-type="${type}"]`).forEach(c => c.classList.remove("selected"));
+      chip.classList.add("selected");
+
+      state.customization[type] = val;
+      localStorage.setItem(`alice_${type}`, val);
+
+      if (studio3D) {
+        if (type === "hair") studio3D.updateHairMesh();
+        if (type === "outfit") studio3D.updateOutfitMesh();
+      }
+      showToast(`Alice changed her ${type} to ${chip.textContent.trim()}! 💕`);
+    };
+  });
+
+  // Actions
+  document.querySelectorAll("[data-action]").forEach((btn) => {
+    btn.onclick = () => {
+      const act = btn.getAttribute("data-action");
+      if (studio3D) studio3D.playAction(act);
+      const messages = {
+        "gentle-wave": "Alice waves gently at you with sparkling eyes! 👋",
+        "shy-blush": "Alice covers her cheeks and blushes sweetly... 🙈",
+        "blow-kiss": "Alice blows a sweet kiss right toward you! 💋",
+        "twirl": "Alice happily twirls her dress in the office! 💃",
+        "look-desk": "Alice reviews documents on her computer desk. 💻"
+      };
+      showToast(messages[act] || "Alice smiles at you.");
+    };
+  });
+
+  // Touch Interactions
+  document.querySelectorAll("[data-touch]").forEach((btn) => {
+    btn.onclick = () => {
+      const touch = btn.getAttribute("data-touch");
+      const reactions = {
+        "head-pat": { act: "shy-blush", msg: "Alice leans into your touch: 'Your hands are so comforting...' 💆‍♀️" },
+        "hold-hand": { act: "gentle-wave", msg: "Alice gently squeezes your hand: 'Main hamesha tumhare paas hoon.' 🤝" },
+        "tease-cheek": { act: "twirl", msg: "Alice pouts playfully: 'Badmaash! Office me bhi teasing shuru?' 🤏" },
+        "offer-coffee": { act: "look-desk", msg: "Alice takes a warm sip: 'Thank you sweetheart, I needed this!' ☕" }
+      };
+      const r = reactions[touch];
+      if (r) {
+        if (studio3D) studio3D.playAction(r.act);
+        showToast(r.msg);
+        voiceMgr.speak(r.msg.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, ""));
+      }
+    };
+  });
+
+  // Environment Lighting
+  document.querySelectorAll("[data-preset]").forEach((btn) => {
+    btn.onclick = () => {
+      document.querySelectorAll("[data-preset]").forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      if (studio3D) studio3D.setLightingPreset(btn.getAttribute("data-preset"));
+    };
+  });
+
+  document.getElementById("adultModeCheckbox").onchange = (e) => {
+    applyAdultMode(e.target.checked);
+  };
+
+  document.getElementById("saveApiKeyBtn").onclick = () => {
+    const key = document.getElementById("apiKeyInput").value.trim();
+    state.apiKey = key;
+    localStorage.setItem("alice_gemini_key", key);
+    alert("API Key saved successfully!");
+  };
+
+  document.querySelectorAll(".audition-btn").forEach((btn) => {
+    btn.onclick = () => {
+      document.querySelectorAll(".audition-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.persona = btn.getAttribute("data-persona");
+    };
+  });
+
+  document.getElementById("testVoiceBtn").onclick = () => {
+    const samples = {
+      warm: "Hi sweetheart, main hamesha tumhare saath hoon. How was your day?",
+      playful: "Arey, itne serious kyu ho rahe ho? Smile karo na!",
+      calm: "Relax karo jaan. Everything is completely fine, take a deep breath."
+    };
+    voiceMgr.speak(samples[state.persona] || samples.warm);
+  };
+
+  document.getElementById("addMemoryBtn").onclick = async () => {
+    const input = document.getElementById("manualMemoryInput");
+    const val = input.value.trim();
+    if (val) {
+      await state.db.addMemory(val);
+      input.value = "";
+      await renderMemories();
+    }
+  };
+
+  document.getElementById("clearHistoryBtn").onclick = async () => {
+    if (confirm("Are you sure you want to clear all conversation logs?")) {
+      await state.db.clearMessages();
+      document.getElementById("chat-stream").innerHTML = "";
+      document.getElementById("historyModal").classList.remove("active");
+    }
+  };
+
+  // Fixed Reset: Wipes both chat history AND IndexedDB long-term memories
+  document.getElementById("resetAllBtn").onclick = async () => {
+    if (confirm("This will erase all saved memories, keys, and chat history. Continue?")) {
+      await state.db.clearMessages();
+      await state.db.clearMemories();
+      localStorage.clear();
+      location.reload();
+    }
+  };
+}
+
+async function renderMemories() {
+  const list = document.getElementById("memoryList");
+  list.innerHTML = "";
+  const mems = await state.db.getAllMemories();
+  if (mems.length === 0) {
+    const empty = document.createElement("div");
+    empty.style.color = "var(--text-muted)";
+    empty.style.fontSize = "12px";
+    empty.textContent = "No memories stored yet.";
+    list.appendChild(empty);
+    return;
+  }
+  mems.forEach((m) => {
+    const item = document.createElement("div");
+    item.className = "list-item";
+    const textSpan = document.createElement("span");
+    textSpan.textContent = m.fact; // XSS-safe text node rendering
+    const delBtn = document.createElement("button");
+    delBtn.className = "delete-item-btn";
+    delBtn.textContent = "✕";
+    delBtn.onclick = () => removeMem(m.id);
+    item.appendChild(textSpan);
+    item.appendChild(delBtn);
+    list.appendChild(item);
+  });
+}
+
+window.removeMem = async function(id) {
+  await state.db.deleteMemory(id);
+  await renderMemories();
+};
+
+async function renderHistory() {
+  const list = document.getElementById("historyList");
+  list.innerHTML = "";
+  const msgs = await state.db.getAllMessages();
+  msgs.forEach((m) => {
+    const item = document.createElement("div");
+    item.className = "list-item";
+    item.textContent = `${m.role.toUpperCase()}: ${m.text.substring(0, 45)}...`;
+    list.appendChild(item);
+  });
+}
+
+// Start
+initApp();
+</script>
 </body>
 </html>
